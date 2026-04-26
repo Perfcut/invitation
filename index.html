@@ -137,11 +137,14 @@
     .curtain.right.open { transform: translateX(102%); }
 
     /* ── SEAL ── */
-    .seal-wrap {
-      position:absolute; top:50px; left:50%;
-      transform:translateX(-50%); z-index:10;
-      transition: transform 1.4s cubic-bezier(0.4,0,0.2,1), opacity 1.2s ease;
-    }
+  .seal-wrap {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10;
+  transition: transform 1.4s cubic-bezier(0.4,0,0.2,1), opacity 1.2s ease;
+}
     .seal-img {
       width:76px; height:76px; object-fit:contain;
       filter: drop-shadow(0 0 16px rgba(212,175,55,0.75));
@@ -910,4 +913,4 @@
     scratchIO.observe(document.getElementById('scratch'));
     </script>
   </body>
-                                                                                                                                                                                                                                                                  </html>
+  </html>
