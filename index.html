@@ -461,27 +461,31 @@
 </head>
 <body>
 
-<!-- FIX 6: audio WITHOUT loop — stops when finished -->
-<audio id="bgm" preload="auto"><source src="music.mp3" type="audio/mpeg"></audio>
+<!-- FIX : audio for ios and android suppored--->
+<!-- Audio: muted preload, iOS-safe -->
+<audio id="bgm" preload="auto" muted playsinline loop>
+  <source src="music.mp3" type="audio/mpeg">
+</audio>
 
-<!-- Music button: ic-off shown by default (not playing yet) -->
+<!-- Fixed music button (top-right) -->
 <button id="music-btn" onclick="toggleMusic()" aria-label="Toggle music">
-  <!-- Playing icon -->
-  <svg id="ic-on" viewBox="0 0 24 24" style="display:none">
-    <path d="M9 18V5l12-2v13"/>
-    <circle cx="6" cy="18" r="3"/>
-    <circle cx="18" cy="16" r="3"/>
-  </svg>
-  <!-- Muted icon (default) -->
+  <!-- Off/muted icon (default) -->
   <svg id="ic-off" viewBox="0 0 24 24">
-    <path d="M9 18V5l12-2v13"/>
-    <circle cx="6" cy="18" r="3"/>
-    <circle cx="18" cy="16" r="3"/>
-    <line x1="3" y1="3" x2="21" y2="21" stroke-width="1.8"/>
+    <path d="M9 18V5l12-2v13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="6" cy="18" r="3" fill="currentColor"/>
+    <circle cx="18" cy="16" r="3" fill="currentColor"/>
+    <line x1="13" y1="13" x2="21" y2="21" stroke="currentColor" stroke-width="1.8"/>
+  </svg>
+  <!-- On icon -->
+  <svg id="ic-on" viewBox="0 0 24 24" style="display:none;">
+    <path d="M9 18V5l12-2v13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="6" cy="18" r="3" fill="currentColor"/>
+    <circle cx="18" cy="16" r="3" fill="currentColor"/>
   </svg>
 </button>
-<div id="music-toast">&#x2669; Tap the music button to play</div>
 
+<!-- Toast feedback -->
+<div id="music-toast">🎵 Music On</div>
 <!-- DUA OVERLAY -->
 <div id="dua-overlay">
   <div class="dua-inner">
@@ -771,58 +775,75 @@
 <footer><a href="https://instagram.com/perf.cut" target="_blank" rel="noopener noreferrer">Made by &#64;perf.cut</a></footer>
 
 <script>
-/* ══════════════════════════════════════════════════
-   FIX 6: iOS MUSIC — AudioContext unlock + no loop
-══════════════════════════════════════════════════ */
-let musicOn = false, audioUnlocked = false;
+/* ios and android supported audio*/
+let musicOn = false;
+let audioUnlocked = false;
 const bgm = document.getElementById('bgm');
 
-// bgm ends naturally (no loop) — FIX 6
-bgm.addEventListener('ended', () => { musicOn = false; setIcons(false); });
-
-function unlockAudio() {
-  if (audioUnlocked) return;
-  try {
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return;
-    const ctx = new AC();
-    const buf = ctx.createBuffer(1, 1, 22050);
-    const src = ctx.createBufferSource();
-    src.buffer = buf; src.connect(ctx.destination); src.start(0);
-    ctx.resume().then(() => { audioUnlocked = true; });
-  } catch(e) {}
-}
-
-['touchstart','touchend','click'].forEach(ev =>
-  document.addEventListener(ev, unlockAudio, { once:true, passive:true })
-);
-
+// Icon toggle
 function setIcons(playing) {
-  document.getElementById('ic-on').style.display  = playing ? 'block' : 'none';
-  document.getElementById('ic-off').style.display = playing ? 'none'  : 'block';
+  document.getElementById('ic-on').style.display = playing ? 'block' : 'none';
+  document.getElementById('ic-off').style.display = playing ? 'none' : 'block';
 }
 
+// Toast
 function showToast() {
   const t = document.getElementById('music-toast');
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3800);
+  setTimeout(() => t.classList.remove('show'), 2500);
 }
 
+// Music toggle (button)
 function toggleMusic() {
   if (musicOn) {
-    bgm.pause(); bgm.currentTime = 0;
-    musicOn = false; setIcons(false);
+    bgm.pause();
+    bgm.currentTime = 0;
+    musicOn = false;
+    setIcons(false);
+    bgm.muted = true;  // Mute off
   } else {
-    bgm.play().then(() => { musicOn = true; setIcons(true); })
-      .catch(() => { setIcons(false); showToast(); });
+    bgm.muted = false;  // Unmute
+    bgm.play().then(() => {
+      musicOn = true;
+      setIcons(true);
+      showToast();
+    }).catch(() => {
+      setIcons(false);
+      showToast();  // Retry prompt
+    });
   }
 }
 
-function tryAutoPlay() {
-  bgm.play().then(() => { musicOn = true; setIcons(true); })
-    .catch(() => { setIcons(false); showToast(); });
+// Unlock & auto-play on first tap (iOS gesture)
+function unlockAudio() {
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+  
+  // Resume any suspended context (if used elsewhere)
+  if (window.AudioContext || window.webkitAudioContext) {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    ctx.resume();
+  }
+  
+  // Play unmuted on gesture
+  bgm.muted = false;
+  bgm.play().then(() => {
+    musicOn = true;
+    setIcons(true);
+    showToast();
+  }).catch(console.log);
 }
 
+// Listen for first touch/click anywhere (one-time)
+['touchstart', 'touchend', 'click'].forEach(ev => {
+  document.addEventListener(ev, unlockAudio, { once: true, passive: true });
+});
+
+// Integrate with your openCurtains() - call unlockAudio() first
+function openCurtains() {
+  unlockAudio();  // Ensures play on curtain tap
+  // Your existing curtain GSAP code...
+}
 /* ══════════════════════════════════════════════════
    FIX 7: CONFETTI — one strong burst, symmetric
 ══════════════════════════════════════════════════ */
@@ -1247,4 +1268,4 @@ function spawnHeart(pos) {
 }
 </script>
 </body>
-    </html>
+  </html>
