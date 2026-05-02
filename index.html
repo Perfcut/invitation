@@ -154,9 +154,9 @@
     top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none;
   }
   .dua-inner { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; width:100%; max-width:360px; }
-  .dua-star-top { display:flex; align-items:center; gap:16px; margin-bottom:34px; width:100%; }
-  .dua-star-line { flex:1; height:1px; background:linear-gradient(to right,transparent,var(--gold)); opacity:0.45; }
-  .dua-star-line.r { background:linear-gradient(to left,transparent,var(--gold)); }
+  .dua-star-top { display:flex; align-items:center; gap:16px; margin-bottom:34px; width:100%; padding:0 3px; }
+  .dua-star-line { flex:1; height:1px; background:linear-gradient(to right, transparent 0%, var(--gold) 100%); opacity:0.75;  }
+  .dua-star-line.r { background:linear-gradient(to left, transparent 0%, var(--gold) 100%); opacity:0.75; }
   .dua-star-gem { width:7px; height:7px; background:var(--gold); transform:rotate(45deg); flex-shrink:0; opacity:0.75; box-shadow:0 0 8px rgba(212,175,55,0.6); }
   .dua-arabic { font-family:'Amiri',serif; font-size:clamp(18px,5.5vw,24px); color:var(--gold-lt); direction:rtl; text-align:center; line-height:2.1; letter-spacing:1px; margin-bottom:26px; text-shadow:0 0 30px rgba(212,175,55,0.25); width:100%; }
 
@@ -461,31 +461,27 @@
 </head>
 <body>
 
-<!-- FIX : audio for ios and android suppored--->
-<!-- Audio: muted preload, iOS-safe -->
-<audio id="bgm" preload="auto" muted playsinline loop>
-  <source src="music.mp3" type="audio/mpeg">
-</audio>
+<!-- FIX 6: audio WITHOUT loop — stops when finished -->
+<audio id="bgm" preload="auto" loop><source src="music.mp3" type="audio/mpeg"></audio>
 
-<!-- Fixed music button (top-right) -->
+<!-- Music button: ic-off shown by default (not playing yet) -->
 <button id="music-btn" onclick="toggleMusic()" aria-label="Toggle music">
-  <!-- Off/muted icon (default) -->
-  <svg id="ic-off" viewBox="0 0 24 24">
-    <path d="M9 18V5l12-2v13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="6" cy="18" r="3" fill="currentColor"/>
-    <circle cx="18" cy="16" r="3" fill="currentColor"/>
-    <line x1="13" y1="13" x2="21" y2="21" stroke="currentColor" stroke-width="1.8"/>
+  <!-- Playing icon -->
+  <svg id="ic-on" viewBox="0 0 24 24" style="display:none">
+    <path d="M9 18V5l12-2v13"/>
+    <circle cx="6" cy="18" r="3"/>
+    <circle cx="18" cy="16" r="3"/>
   </svg>
-  <!-- On icon -->
-  <svg id="ic-on" viewBox="0 0 24 24" style="display:none;">
-    <path d="M9 18V5l12-2v13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="6" cy="18" r="3" fill="currentColor"/>
-    <circle cx="18" cy="16" r="3" fill="currentColor"/>
+  <!-- Muted icon (default) -->
+  <svg id="ic-off" viewBox="0 0 24 24">
+    <path d="M9 18V5l12-2v13"/>
+    <circle cx="6" cy="18" r="3"/>
+    <circle cx="18" cy="16" r="3"/>
+    <line x1="3" y1="3" x2="21" y2="21" stroke-width="1.8"/>
   </svg>
 </button>
+<div id="music-toast">&#x2669; Tap the music button to play</div>
 
-<!-- Toast feedback -->
-<div id="music-toast">🎵 Music On</div>
 <!-- DUA OVERLAY -->
 <div id="dua-overlay">
   <div class="dua-inner">
@@ -538,6 +534,10 @@
 <!-- HERO -->
 <section id="hero">
   <div class="hero-content" id="hero-content">
+    <!-- Decorative corner images -->
+    <img src="cute-pokkie.png" alt="" onerror="this.style.display='none'" style="position:absolute;top:-14px;left:-10px;width:70px;opacity:0.88;transform:scaleX(-1);filter:drop-shadow(0 2px 8px rgba(0,0,0,0.22));pointer-events:none;z-index:2;">
+    <img src="cute-pokkie.png" alt="" onerror="this.style.display='none'" style="position:absolute;top:-14px;right:-10px;width:70px;opacity:0.88;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.22));pointer-events:none;z-index:2;">
+    <img src="bow-ilustration-pokkie.png" alt="" onerror="this.style.display='none'" style="position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);width:90px;opacity:0.55;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.18));pointer-events:none;z-index:2;">
     <img src="lamp-decor.png" alt="" class="decor-lamp l" onerror="this.style.display='none'">
     <img src="lamp-decor.png" alt="" class="decor-lamp r" onerror="this.style.display='none'">
     <div class="c-frame">
@@ -565,7 +565,7 @@
       </p>
     </div>
     <div class="couple-frame">
-      <img src="couples.png" alt="Thameem &amp; Rifaya" onerror="this.parentElement.style.display='none'">
+      <img src="Couples.png" alt="Thameem &amp; Rifaya" onerror="this.parentElement.style.display='none'">
     </div>
     <img src="flowers-decor.png" alt="" class="decor-flower l" onerror="this.style.display='none'">
     <img src="flowers-decor.png" alt="" class="decor-flower r" onerror="this.style.display='none'">
@@ -775,75 +775,58 @@
 <footer><a href="https://instagram.com/perf.cut" target="_blank" rel="noopener noreferrer">Made by &#64;perf.cut</a></footer>
 
 <script>
-/* ios and android supported audio*/
-let musicOn = false;
-let audioUnlocked = false;
+/* ══════════════════════════════════════════════════
+   FIX 6: iOS MUSIC — AudioContext unlock + no loop
+══════════════════════════════════════════════════ */
+let musicOn = false, audioUnlocked = false;
 const bgm = document.getElementById('bgm');
 
-// Icon toggle
-function setIcons(playing) {
-  document.getElementById('ic-on').style.display = playing ? 'block' : 'none';
-  document.getElementById('ic-off').style.display = playing ? 'none' : 'block';
+// bgm ends naturally (no loop) — FIX 6
+bgm.addEventListener('ended', () => { musicOn = false; setIcons(false); });
+
+function unlockAudio() {
+  if (audioUnlocked) return;
+  try {
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    const ctx = new AC();
+    const buf = ctx.createBuffer(1, 1, 22050);
+    const src = ctx.createBufferSource();
+    src.buffer = buf; src.connect(ctx.destination); src.start(0);
+    ctx.resume().then(() => { audioUnlocked = true; });
+  } catch(e) {}
 }
 
-// Toast
+['touchstart','touchend','click'].forEach(ev =>
+  document.addEventListener(ev, unlockAudio, { once:true, passive:true })
+);
+
+function setIcons(playing) {
+  document.getElementById('ic-on').style.display  = playing ? 'block' : 'none';
+  document.getElementById('ic-off').style.display = playing ? 'none'  : 'block';
+}
+
 function showToast() {
   const t = document.getElementById('music-toast');
   t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 2500);
+  setTimeout(() => t.classList.remove('show'), 3800);
 }
 
-// Music toggle (button)
 function toggleMusic() {
   if (musicOn) {
-    bgm.pause();
-    bgm.currentTime = 0;
-    musicOn = false;
-    setIcons(false);
-    bgm.muted = true;  // Mute off
+    bgm.pause(); bgm.currentTime = 0;
+    musicOn = false; setIcons(false);
   } else {
-    bgm.muted = false;  // Unmute
-    bgm.play().then(() => {
-      musicOn = true;
-      setIcons(true);
-      showToast();
-    }).catch(() => {
-      setIcons(false);
-      showToast();  // Retry prompt
-    });
+    bgm.play().then(() => { musicOn = true; setIcons(true); })
+      .catch(() => { setIcons(false); showToast(); });
   }
 }
 
-// Unlock & auto-play on first tap (iOS gesture)
-function unlockAudio() {
-  if (audioUnlocked) return;
-  audioUnlocked = true;
-  
-  // Resume any suspended context (if used elsewhere)
-  if (window.AudioContext || window.webkitAudioContext) {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    ctx.resume();
-  }
-  
-  // Play unmuted on gesture
-  bgm.muted = false;
-  bgm.play().then(() => {
-    musicOn = true;
-    setIcons(true);
-    showToast();
-  }).catch(console.log);
+function tryAutoPlay() {
+  bgm.play().then(() => { musicOn = true; setIcons(true); })
+    .catch(() => { setIcons(false); showToast(); });
 }
 
-// Listen for first touch/click anywhere (one-time)
-['touchstart', 'touchend', 'click'].forEach(ev => {
-  document.addEventListener(ev, unlockAudio, { once: true, passive: true });
-});
-
-// Integrate with your openCurtains() - call unlockAudio() first
-function openCurtains() {
-  unlockAudio();  // Ensures play on curtain tap
-  // Your existing curtain GSAP code...
-}
 /* ══════════════════════════════════════════════════
    FIX 7: CONFETTI — one strong burst, symmetric
 ══════════════════════════════════════════════════ */
@@ -880,13 +863,10 @@ function openCurtains() {
   if (curtainOpened) return; curtainOpened = true;
   unlockAudio();
 
-  // FIX 1: iOS — attempt play immediately inside the user gesture (same call stack)
+  // Play music on curtain tap — this IS the user gesture, so iOS allows it
   bgm.load();
-  const _iosPlay = bgm.play();
-  if (_iosPlay !== undefined) {
-    _iosPlay.then(() => { musicOn = true; setIcons(true); })
-            .catch(() => { setIcons(false); showToast(); });
-  }
+  bgm.play().then(() => { musicOn = true; setIcons(true); })
+            .catch(() => { setIcons(false); });
 
   const overlay = document.getElementById('curtain-overlay');
   const lc  = document.getElementById('curtain-left');
@@ -940,7 +920,7 @@ function openCurtains() {
     setTimeout(() => overlay.classList.add('opened'), 8000);
   }, [], .45);
 
-  // tryAutoPlay() removed — iOS play is handled at the top of openCurtains()
+  // Music already started on curtain tap above
 }
 
 /* ══════════════════════════════════════════════════
@@ -971,7 +951,7 @@ function initScratch(idx) {
   const ctx = canvas.getContext('2d');
   const hp  = heartPath2D(sz);
 
-  function setupScratchListeners() {
+  function attachListeners() {
     ctx.globalCompositeOperation = 'destination-out';
     let drawing = false; const r = sz * .15;
 
@@ -997,36 +977,34 @@ function initScratch(idx) {
     canvas.addEventListener('touchend', () => drawing=false);
   }
 
-  // FIX 2: Draw heart.png as the scratch overlay image
-  const img = new Image();
-  img.onload = () => {
+  function drawFallback() {
     ctx.save();
-    ctx.beginPath();
-    ctx.clip(hp);
-    ctx.drawImage(img, 0, 0, sz, sz);
-    ctx.restore();
-    setupScratchListeners();
-  };
-  img.onerror = () => {
-    // Fallback: gold gradient if heart.png is missing
-    ctx.save();
-    ctx.beginPath();
-    ctx.clip(hp);
+    ctx.beginPath(); ctx.clip(hp);
     const grad = ctx.createRadialGradient(sz*.42, sz*.35, 0, sz/2, sz/2, sz/2);
     grad.addColorStop(0,   '#F5E89A');
     grad.addColorStop(0.4, '#EDD264');
     grad.addColorStop(0.75,'#D4AF37');
     grad.addColorStop(1,   '#A88B20');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, sz, sz);
+    ctx.fillStyle = grad; ctx.fillRect(0, 0, sz, sz);
     ctx.fillStyle = 'rgba(100,65,8,0.52)';
     ctx.font = `600 ${sz*.13}px Lato,sans-serif`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     ctx.fillText('SCRATCH', sz/2, sz*.44);
     ctx.fillText('HERE',    sz/2, sz*.58);
     ctx.restore();
-    setupScratchListeners();
+    attachListeners();
+  }
+
+  // Draw heart.png as scratch overlay; fallback to gradient if missing
+  const img = new Image();
+  img.onload = () => {
+    ctx.save();
+    ctx.beginPath(); ctx.clip(hp);
+    ctx.drawImage(img, 0, 0, sz, sz);
+    ctx.restore();
+    attachListeners();
   };
+  img.onerror = drawFallback;
   img.src = 'heart.png';
 }
 
@@ -1111,9 +1089,11 @@ function spawnParticles(src) {
 
   function flipCard() {
     isFlipped = !isFlipped;
-    // FIX 3: 180° flip to show the other face (was 360 which returned to same face)
-    totalRotation += 180;
+    // FIX 4: 360° spin — add 360 to current rotation, land on correct face
+    totalRotation += 180; // 180° to reveal the other face (was 360 = same face)
     card.style.transform = `rotateY(${totalRotation}deg)`;
+    // Faces are at 0° and 180° — the flip-back has rotateY(180deg) baked in
+    // After each 360 spin the front/back logic alternates
     setDots(isFlipped); progress = 0; lastTime = null; bar.style.width = '0%';
   }
 
@@ -1147,16 +1127,14 @@ function spawnParticles(src) {
   scene.addEventListener('touchend', e => {
     clearTimeout(holdTmt);
     const dx = e.changedTouches[0].clientX - tStartX;
-    // FIX 3: Flip ONLY on confirmed swipe — no tap-to-flip
     if (isSwiping && Math.abs(dx) > SWIPE_THRESHOLD) {
       flipCard(); paused = false;
     } else {
-      paused = false;
+      paused = false; // was held or small movement — just unpause
     }
     isSwiping = false;
   }, {passive:true});
-
-  // FIX 3: Removed click, mousedown, mouseup, mouseleave listeners — swipe only
+  // Tap-to-flip and mouse listeners intentionally removed — swipe only
 
   window._flipCard = { get paused(){return paused;}, set paused(v){paused=v;} };
 
