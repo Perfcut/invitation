@@ -774,105 +774,126 @@
 
 <footer><a href="https://instagram.com/perf.cut" target="_blank" rel="noopener noreferrer">Made by &#64;perf.cut</a></footer>
 
+
 <script>
-/* ══════════════════════════════════════════════════
-   FIX 6: iOS MUSIC — AudioContext unlock + no loop
-══════════════════════════════════════════════════ */
-let musicOn = false, audioUnlocked = false;
+/* ══════════════════════════════════════════════════════
+   MUSIC — iOS Safe
+   Strategy: NEVER autoplay. Music plays ONLY on direct
+   user tap (music button OR curtain open tap).
+   AudioContext is unlocked on first any-gesture touch.
+══════════════════════════════════════════════════════ */
+
+let musicOn   = false;
+let _acUnlocked = false;
 const bgm = document.getElementById('bgm');
 
-// bgm ends naturally (no loop) — FIX 6
-bgm.addEventListener('ended', () => { musicOn = false; setIcons(false); });
-
-function unlockAudio() {
-  if (audioUnlocked) return;
+/* Silently unlock Web Audio on first touch — iOS requirement */
+function unlockAudioContext() {
+  if (_acUnlocked) return;
   try {
-    const AC = window.AudioContext || window.webkitAudioContext;
+    const AC  = window.AudioContext || window.webkitAudioContext;
     if (!AC) return;
     const ctx = new AC();
     const buf = ctx.createBuffer(1, 1, 22050);
     const src = ctx.createBufferSource();
-    src.buffer = buf; src.connect(ctx.destination); src.start(0);
-    ctx.resume().then(() => { audioUnlocked = true; });
-  } catch(e) {}
+    src.buffer = buf;
+    src.connect(ctx.destination);
+    src.start(0);
+    ctx.resume().then(() => { _acUnlocked = true; });
+  } catch (e) { /* silent */ }
 }
 
-['touchstart','touchend','click'].forEach(ev =>
-  document.addEventListener(ev, unlockAudio, { once:true, passive:true })
-);
+/* Register unlock on very first touch/click — passive so scroll isn't blocked */
+document.addEventListener('touchstart', unlockAudioContext, { once: true, passive: true });
+document.addEventListener('click',      unlockAudioContext, { once: true, passive: true });
 
-function setIcons(playing) {
+/* Update button icons */
+function setMusicIcons(playing) {
   document.getElementById('ic-on').style.display  = playing ? 'block' : 'none';
   document.getElementById('ic-off').style.display = playing ? 'none'  : 'block';
 }
 
-function showToast() {
+/* Toast nudge */
+function showMusicToast(msg) {
   const t = document.getElementById('music-toast');
+  t.textContent = msg || '\u266A Tap the music button to play';
   t.classList.add('show');
   setTimeout(() => t.classList.remove('show'), 3800);
 }
 
+/* Play helper — handles iOS promise rejection gracefully */
+function startMusic() {
+  bgm.play()
+    .then(() => { musicOn = true; setMusicIcons(true); })
+    .catch(() => {
+      musicOn = false; setMusicIcons(false);
+      showMusicToast('\u266A Tap \u25B6 to play music');
+    });
+}
+
+/* Toggle button */
 function toggleMusic() {
   if (musicOn) {
-    bgm.pause(); bgm.currentTime = 0;
-    musicOn = false; setIcons(false);
+    bgm.pause();
+    musicOn = false;
+    setMusicIcons(false);
   } else {
-    bgm.play().then(() => { musicOn = true; setIcons(true); })
-      .catch(() => { setIcons(false); showToast(); });
+    startMusic();
   }
 }
 
-function tryAutoPlay() {
-  bgm.play().then(() => { musicOn = true; setIcons(true); })
-    .catch(() => { setIcons(false); showToast(); });
-}
+/* ══════════════════════════════════════════════════════
+   CONFETTI — one strong symmetric burst
+══════════════════════════════════════════════════════ */
+let _confettiCanvas = null;
+let _myConfetti    = null;
 
-/* ══════════════════════════════════════════════════
-   FIX 7: CONFETTI — one strong burst, symmetric
-══════════════════════════════════════════════════ */
-let _confettiCanvas = null, _myConfetti = null;
 function getConfetti() {
   if (!_myConfetti) {
     _confettiCanvas = document.createElement('canvas');
-    _confettiCanvas.style.cssText = 'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:800;';
+    _confettiCanvas.style.cssText =
+      'position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:800;';
     document.body.appendChild(_confettiCanvas);
-    _myConfetti = confetti.create(_confettiCanvas, { resize:true, useWorker:false });
+    _myConfetti = confetti.create(_confettiCanvas, { resize: true, useWorker: false });
   }
   return _myConfetti;
 }
 
 function fireCannon() {
-  const fire = getConfetti();
-  const COLORS = ['#D4AF37','#EDD264','#F5E89A','#FFFFFF','#5D6D50','#AEC29B','#C4857A','#E8A89F','#C8D9B8','#F5F1E5'];
-  const BASE = { ticks:320, decay:0.92, gravity:1.0, startVelocity:60, scalar:1.05,
-                 shapes:['square','circle'], colors:COLORS };
-
-  // FIX 7: Symmetric — same particleCount from matching angles
-  fire({ ...BASE, angle:60,  spread:60, particleCount:80, origin:{x:0.1, y:0.88} });
-  fire({ ...BASE, angle:120, spread:60, particleCount:80, origin:{x:0.9, y:0.88} });
-  fire({ ...BASE, angle:75,  spread:65, particleCount:80, origin:{x:0.3, y:0.9}  });
-  fire({ ...BASE, angle:105, spread:65, particleCount:80, origin:{x:0.7, y:0.9}  });
-  fire({ ...BASE, angle:90,  spread:80, particleCount:100, origin:{x:0.5, y:0.88}, startVelocity:65 });
+  const fire   = getConfetti();
+  const COLORS = [
+    '#D4AF37','#EDD264','#F5E89A','#FFFFFF',
+    '#5D6D50','#AEC29B','#C4857A','#E8A89F','#C8D9B8','#F5F1E5'
+  ];
+  const BASE = {
+    ticks: 320, decay: 0.92, gravity: 1.0,
+    startVelocity: 60, scalar: 1.05,
+    shapes: ['square', 'circle'], colors: COLORS
+  };
+  fire({ ...BASE, angle: 60,  spread: 60, particleCount: 80, origin: { x: 0.1, y: 0.88 } });
+  fire({ ...BASE, angle: 120, spread: 60, particleCount: 80, origin: { x: 0.9, y: 0.88 } });
+  fire({ ...BASE, angle: 75,  spread: 65, particleCount: 80, origin: { x: 0.3, y: 0.9  } });
+  fire({ ...BASE, angle: 105, spread: 65, particleCount: 80, origin: { x: 0.7, y: 0.9  } });
+  fire({ ...BASE, angle: 90,  spread: 80, particleCount: 100,origin: { x: 0.5, y: 0.88 }, startVelocity: 65 });
 }
 
-/* ══════════════════════════════════════════════════
-   GSAP CURTAIN PHYSICS
-══════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════
+   CURTAIN OPEN — GSAP physics
+   Music starts here since THIS tap IS a user gesture
+══════════════════════════════════════════════════════ */
 let curtainOpened = false;
-function openCurtains() {
-  if (curtainOpened) return; curtainOpened = true;
-  unlockAudio();
 
-  // Play music on curtain tap — this IS the user gesture, so iOS allows it
-  bgm.load();
-  bgm.play().then(() => { musicOn = true; setIcons(true); })
-            .catch(() => { setIcons(false); });
+function openCurtains() {
+  if (curtainOpened) return;
+  curtainOpened = true;
+
+  unlockAudioContext();
 
   const overlay = document.getElementById('curtain-overlay');
-  const lc  = document.getElementById('curtain-left');
-  const rc  = document.getElementById('curtain-right');
-  const flL = document.getElementById('fabric-left');
-  const flR = document.getElementById('fabric-right');
+  const lc      = document.getElementById('curtain-left');
+  const rc      = document.getElementById('curtain-right');
+  const flL     = document.getElementById('fabric-left');
+  const flR     = document.getElementById('fabric-right');
   const seal    = document.getElementById('seal');
   const prompt  = document.getElementById('tap-prompt');
   const seam    = document.getElementById('curtain-seam');
@@ -880,122 +901,138 @@ function openCurtains() {
   const dua     = document.getElementById('dua-overlay');
   const content = document.getElementById('hero-content');
 
+  /* — Curtain tap IS the user gesture: start music now — */
+  startMusic();
+
+  /* Hide prompt & seal immediately */
   prompt.classList.add('gone');
   setTimeout(() => seal.classList.add('lifted'), 100);
-  gsap.to([seam, rod], { opacity:0, duration:.5, delay:.3 });
 
-  const tl = gsap.timeline({ delay:.38 });
+  /* Fade rod and seam */
+  gsap.to([seam, rod], { opacity: 0, duration: .5, delay: .3 });
 
-  // Curtains sweep apart
-  tl.to(lc, { x:'-100%', scaleX:.78, duration:2.0, ease:'power2.inOut' }, 0)
-    .to(rc, { x:'100%',  scaleX:.78, duration:2.0, ease:'power2.inOut' }, 0);
+  /* GSAP timeline */
+  const tl = gsap.timeline({ delay: .38 });
 
-  // Fabric bottom-lag
-  tl.to(flL, { skewY:-6, y:22, duration:.75, ease:'power1.in' }, 0)
-    .to(flL, { skewY:0,  y:0,  duration:.55, ease:'elastic.out(1,0.5)' }, .8)
-    .to(flR, { skewY:6,  y:22, duration:.75, ease:'power1.in' }, 0)
-    .to(flR, { skewY:0,  y:0,  duration:.55, ease:'elastic.out(1,0.5)' }, .8);
+  /* Sweep curtains apart */
+  tl.to(lc, { x: '-100%', scaleX: .78, duration: 2.0, ease: 'power2.inOut' }, 0)
+    .to(rc, { x:  '100%', scaleX: .78, duration: 2.0, ease: 'power2.inOut' }, 0);
 
-  // Overshoot bounce
-  tl.to(lc, { x:'-91%', duration:.2, ease:'power1.out' })
-    .to(lc, { x:'-100%', duration:.38, ease:'power2.out' });
-  tl.to(rc, { x:'91%',  duration:.2, ease:'power1.out' }, '<')
-    .to(rc, { x:'100%', duration:.38, ease:'power2.out' }, '<');
+  /* Fabric bottom-lag (cloth physics) */
+  tl.to(flL, { skewY: -6, y: 22, duration: .75, ease: 'power1.in'  }, 0)
+    .to(flL, { skewY:  0, y:  0, duration: .55, ease: 'elastic.out(1, 0.5)' }, .8)
+    .to(flR, { skewY:  6, y: 22, duration: .75, ease: 'power1.in'  }, 0)
+    .to(flR, { skewY:  0, y:  0, duration: .55, ease: 'elastic.out(1, 0.5)' }, .8);
 
-  // Confetti burst (FIX 7: once)
+  /* Overshoot bounce */
+  tl.to(lc, { x: '-91%', duration: .2, ease: 'power1.out' })
+    .to(lc, { x: '-100%',duration: .38, ease: 'power2.out' });
+  tl.to(rc, { x:  '91%', duration: .2, ease: 'power1.out' }, '<')
+    .to(rc, { x:  '100%',duration: .38, ease: 'power2.out' }, '<');
+
+  /* Confetti burst */
   tl.call(fireCannon, [], .95);
 
-  // Dua overlay
+  /* Dua overlay */
   tl.call(() => {
-    gsap.fromTo(dua, { opacity:0, y:28 },
-      { opacity:1, y:0, duration:1.2, ease:'power2.out',
-        onStart: () => { dua.style.pointerEvents = 'none'; } });
-    gsap.to(dua, { opacity:0, y:-20, duration:1, ease:'power2.in', delay:6.2,
-      onComplete: () => { dua.style.display = 'none'; } });
+    gsap.fromTo(dua,
+      { opacity: 0, y: 28 },
+      { opacity: 1, y: 0, duration: 1.2, ease: 'power2.out',
+        onStart: () => { dua.style.pointerEvents = 'none'; } }
+    );
+    gsap.to(dua, {
+      opacity: 0, y: -20, duration: 1, ease: 'power2.in', delay: 6.2,
+      onComplete: () => { dua.style.display = 'none'; }
+    });
   }, [], .45);
 
-  // Hero content
+  /* Reveal hero content after dua */
   tl.call(() => {
-    setTimeout(() => { content.classList.add('show'); document.body.classList.add('unlocked'); }, 7400);
+    setTimeout(() => {
+      content.classList.add('show');
+      document.body.classList.add('unlocked');
+    }, 7400);
     setTimeout(() => overlay.classList.add('opened'), 8000);
   }, [], .45);
-
-  // Music already started on curtain tap above
 }
 
-/* ══════════════════════════════════════════════════
-   FIX 3: HEART SCRATCH — proper path, larger
-══════════════════════════════════════════════════ */
-const THRESHOLD = 0.52, done = [false, false, false];
+/* ══════════════════════════════════════════════════════
+   SCRATCH — heart-shaped canvas reveal
+══════════════════════════════════════════════════════ */
+const THRESHOLD = 0.52;
+const done = [false, false, false];
 
 function heartPath2D(sz) {
-  // Scaled for sz×sz canvas — matches CSS clip-path exactly
   const s = sz / 100;
   const p = new Path2D();
   p.moveTo(50*s, 24*s);
-  p.bezierCurveTo(50*s, 11*s, 36*s, 3*s, 22*s, 3*s);
-  p.bezierCurveTo(7*s,  3*s,  2*s, 17*s,  2*s, 27*s);
-  p.bezierCurveTo(2*s, 52*s, 26*s, 69*s, 50*s, 93*s);
+  p.bezierCurveTo(50*s, 11*s, 36*s,  3*s, 22*s,  3*s);
+  p.bezierCurveTo( 7*s,  3*s,  2*s, 17*s,  2*s, 27*s);
+  p.bezierCurveTo( 2*s, 52*s, 26*s, 69*s, 50*s, 93*s);
   p.bezierCurveTo(74*s, 69*s, 98*s, 52*s, 98*s, 27*s);
-  p.bezierCurveTo(98*s, 17*s, 93*s, 3*s,  78*s, 3*s);
-  p.bezierCurveTo(64*s, 3*s, 50*s, 11*s, 50*s, 24*s);
+  p.bezierCurveTo(98*s, 17*s, 93*s,  3*s, 78*s,  3*s);
+  p.bezierCurveTo(64*s,  3*s, 50*s, 11*s, 50*s, 24*s);
   p.closePath();
   return p;
 }
 
 function initScratch(idx) {
-  const canvas = document.getElementById('sc'+idx);
-  const wrap   = document.getElementById('sw'+idx);
+  const canvas = document.getElementById('sc' + idx);
+  const wrap   = document.getElementById('sw' + idx);
   const sz     = Math.max(wrap.offsetWidth, 100);
   canvas.width = sz; canvas.height = sz;
-  const ctx = canvas.getContext('2d');
-  const hp  = heartPath2D(sz);
+  const ctx    = canvas.getContext('2d');
+  const hp     = heartPath2D(sz);
 
-  function attachListeners() {
-    ctx.globalCompositeOperation = 'destination-out';
-    let drawing = false; const r = sz * .15;
-
-    function pos(e) {
-      const rect = canvas.getBoundingClientRect();
-      const sx = canvas.width/rect.width, sy = canvas.height/rect.height;
-      const src = e.touches ? e.touches[0] : e;
-      return { x:(src.clientX-rect.left)*sx, y:(src.clientY-rect.top)*sy };
-    }
-    function draw(e) {
-      if (!drawing) return; e.preventDefault();
-      const {x,y} = pos(e);
-      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
-      checkThreshold(idx, ctx, canvas, sz, hp);
-    }
-
-    canvas.addEventListener('mousedown', e => { drawing=true; draw(e); });
-    canvas.addEventListener('mousemove', draw);
-    canvas.addEventListener('mouseup', () => drawing=false);
-    canvas.addEventListener('mouseleave', () => drawing=false);
-    canvas.addEventListener('touchstart', e => { drawing=true; draw(e); }, {passive:false});
-    canvas.addEventListener('touchmove', draw, {passive:false});
-    canvas.addEventListener('touchend', () => drawing=false);
-  }
-
-  function drawFallback() {
+  /* Draw gold surface inside heart shape */
+  function drawGoldSurface() {
     ctx.save();
     ctx.beginPath(); ctx.clip(hp);
     const grad = ctx.createRadialGradient(sz*.42, sz*.35, 0, sz/2, sz/2, sz/2);
-    grad.addColorStop(0,   '#F5E89A');
-    grad.addColorStop(0.4, '#EDD264');
-    grad.addColorStop(0.75,'#D4AF37');
-    grad.addColorStop(1,   '#A88B20');
+    grad.addColorStop(0,    '#F5E89A');
+    grad.addColorStop(0.4,  '#EDD264');
+    grad.addColorStop(0.75, '#D4AF37');
+    grad.addColorStop(1,    '#A88B20');
     ctx.fillStyle = grad; ctx.fillRect(0, 0, sz, sz);
-    ctx.fillStyle = 'rgba(100,65,8,0.52)';
-    ctx.font = `600 ${sz*.13}px Lato,sans-serif`;
+    ctx.fillStyle = 'rgba(100, 65, 8, 0.52)';
+    ctx.font = `600 ${sz * .13}px Lato, sans-serif`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('SCRATCH', sz/2, sz*.44);
-    ctx.fillText('HERE',    sz/2, sz*.58);
+    ctx.fillText('SCRATCH', sz/2, sz * .44);
+    ctx.fillText('HERE',    sz/2, sz * .58);
     ctx.restore();
-    attachListeners();
   }
 
-  // Draw heart.png as scratch overlay; fallback to gradient if missing
+  /* Attach pointer/touch handlers */
+  function attachListeners() {
+    ctx.globalCompositeOperation = 'destination-out';
+    let drawing = false;
+    const r = sz * .15;
+
+    function getPos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const sx = canvas.width / rect.width;
+      const sy = canvas.height / rect.height;
+      const src = e.touches ? e.touches[0] : e;
+      return { x: (src.clientX - rect.left) * sx, y: (src.clientY - rect.top) * sy };
+    }
+    function draw(e) {
+      if (!drawing) return;
+      e.preventDefault();
+      const { x, y } = getPos(e);
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+      checkThreshold(idx, ctx, canvas, sz, hp);
+    }
+
+    canvas.addEventListener('mousedown',  e => { drawing = true; draw(e); });
+    canvas.addEventListener('mousemove',  draw);
+    canvas.addEventListener('mouseup',    () => drawing = false);
+    canvas.addEventListener('mouseleave', () => drawing = false);
+    canvas.addEventListener('touchstart', e => { drawing = true; draw(e); }, { passive: false });
+    canvas.addEventListener('touchmove',  draw, { passive: false });
+    canvas.addEventListener('touchend',   () => drawing = false);
+  }
+
+  /* Try loading custom heart image, fall back to gold gradient */
   const img = new Image();
   img.onload = () => {
     ctx.save();
@@ -1004,22 +1041,27 @@ function initScratch(idx) {
     ctx.restore();
     attachListeners();
   };
-  img.onerror = drawFallback;
+  img.onerror = () => { drawGoldSurface(); attachListeners(); };
   img.src = 'heart.png';
 }
 
 function checkThreshold(idx, ctx, canvas, sz, hp) {
   if (done[idx]) return;
-  const data = ctx.getImageData(0, 0, sz, sz).data;
+  const data  = ctx.getImageData(0, 0, sz, sz).data;
   let clear = 0, total = 0;
-  for (let y = 0; y < sz; y++) for (let x = 0; x < sz; x++)
-    if (ctx.isPointInPath(hp, x, y)) { total++; if(data[((y*sz)+x)*4+3]<128) clear++; }
-  if (clear/total > THRESHOLD) {
-    done[idx] = true; ctx.clearRect(0, 0, sz, sz);
-    const txt = document.getElementById('st'+idx);
-    txt.classList.add('revealed');
-    setTimeout(() => { txt.style.transform='scale(1)'; }, 520);
-    spawnParticles(document.getElementById('sw'+idx));
+  for (let y = 0; y < sz; y++) {
+    for (let x = 0; x < sz; x++) {
+      if (ctx.isPointInPath(hp, x, y)) {
+        total++;
+        if (data[((y * sz) + x) * 4 + 3] < 128) clear++;
+      }
+    }
+  }
+  if (clear / total > THRESHOLD) {
+    done[idx] = true;
+    ctx.clearRect(0, 0, sz, sz);
+    document.getElementById('st' + idx).classList.add('revealed');
+    spawnParticles(document.getElementById('sw' + idx));
     if (done.every(Boolean)) {
       setTimeout(() => document.getElementById('sf').classList.add('on'), 600);
       setTimeout(showPaper, 1000);
@@ -1027,24 +1069,26 @@ function checkThreshold(idx, ctx, canvas, sz, hp) {
   }
 }
 
+/* Paper popup */
 function showPaper() {
   document.body.classList.add('popup-open');
   document.getElementById('paper-backdrop').classList.add('on');
   document.getElementById('paper-popup').classList.add('falling');
   setTimeout(() => {
-    const fire = getConfetti();
-    fire({ particleCount:80, spread:60, startVelocity:34,
-      origin:{x:.5, y:.58}, ticks:260,
-      colors:['#D4AF37','#EDD264','#AEC29B','#F5F1E5','#C4857A','#C8D9B8'], scalar:.85 });
+    getConfetti()({
+      particleCount: 80, spread: 60, startVelocity: 34,
+      origin: { x: .5, y: .58 }, ticks: 260,
+      colors: ['#D4AF37','#EDD264','#AEC29B','#F5F1E5','#C4857A','#C8D9B8'],
+      scalar: .85
+    });
   }, 700);
 }
-
 function closePaper() {
   document.body.classList.remove('popup-open');
   const popup = document.getElementById('paper-popup');
-  popup.style.transition = 'opacity .3s ease,transform .3s ease';
-  popup.style.opacity = '0';
-  popup.style.transform = 'translate(-50%,-75%) rotate(5deg) scale(0.85)';
+  popup.style.transition = 'opacity .3s ease, transform .3s ease';
+  popup.style.opacity    = '0';
+  popup.style.transform  = 'translate(-50%, -75%) rotate(5deg) scale(0.85)';
   document.getElementById('paper-backdrop').classList.remove('on');
   setTimeout(() => {
     popup.classList.remove('falling');
@@ -1052,197 +1096,237 @@ function closePaper() {
   }, 360);
 }
 
+/* Scratch particle burst */
 function spawnParticles(src) {
-  const rect = src.getBoundingClientRect();
-  const cx = rect.left+rect.width/2, cy = rect.top+rect.height/2;
-  const colors = ['#D4AF37','#EDD264','#F5F1E5','#AEC29B','#C4857A'];
+  const rect   = src.getBoundingClientRect();
+  const cx     = rect.left + rect.width / 2;
+  const cy     = rect.top  + rect.height / 2;
+  const COLORS = ['#D4AF37','#EDD264','#F5F1E5','#AEC29B','#C4857A'];
   for (let i = 0; i < 24; i++) {
-    const p = document.createElement('div'); p.className = 'prtcl';
-    const size=3+Math.random()*6, angle=Math.random()*Math.PI*2, dist=35+Math.random()*85, dur=.7+Math.random()*.8;
-    p.style.cssText = `left:${cx}px;top:${cy}px;width:${size}px;height:${size}px;background:${colors[Math.floor(Math.random()*colors.length)]};box-shadow:0 0 5px rgba(212,175,55,0.5);`;
+    const p     = document.createElement('div');
+    p.className = 'prtcl';
+    const size  = 3  + Math.random() * 6;
+    const angle = Math.random() * Math.PI * 2;
+    const dist  = 35 + Math.random() * 85;
+    const dur   = .7 + Math.random() * .8;
+    p.style.cssText = `left:${cx}px;top:${cy}px;width:${size}px;height:${size}px;`
+      + `background:${COLORS[Math.floor(Math.random() * COLORS.length)]};`
+      + `box-shadow:0 0 5px rgba(212,175,55,.5);`;
     document.body.appendChild(p);
     p.animate([
-      {transform:'translate(-50%,-50%) scale(1)',opacity:1},
-      {transform:`translate(${Math.cos(angle)*dist-size/2}px,${Math.sin(angle)*dist-55-size/2}px) scale(0.1)`,opacity:0}
-    ],{duration:dur*1000,easing:'cubic-bezier(0.1,0.7,0.3,1)',fill:'forwards'});
-    setTimeout(() => p.remove(), dur*1000+60);
+      { transform: 'translate(-50%,-50%) scale(1)', opacity: 1 },
+      { transform: `translate(${Math.cos(angle)*dist - size/2}px, ${Math.sin(angle)*dist - 55 - size/2}px) scale(0.1)`, opacity: 0 }
+    ], { duration: dur * 1000, easing: 'cubic-bezier(0.1,0.7,0.3,1)', fill: 'forwards' });
+    setTimeout(() => p.remove(), dur * 1000 + 60);
   }
 }
 
-/* ══════════════════════════════════════════════════
-   FIX 4: VENUE CARDS — 360° spin on flip
-══════════════════════════════════════════════════ */
-(function() {
-  const card  = document.getElementById('flip-card');
-  const scene = document.getElementById('flip-scene');
-  const bar   = document.getElementById('flip-bar');
-  const [dot0,dot1,dot2,dot3] = ['dot0','dot1','dot2','dot3'].map(id=>document.getElementById(id));
+/* ══════════════════════════════════════════════════════
+   VENUE FLIP CARD
+══════════════════════════════════════════════════════ */
+(function () {
+  const card   = document.getElementById('flip-card');
+  const scene  = document.getElementById('flip-scene');
+  const bar    = document.getElementById('flip-bar');
+  const dots   = ['dot0','dot1','dot2','dot3'].map(id => document.getElementById(id));
 
-  let isFlipped=false, paused=false, progress=0, rafId=null, lastTime=null;
-  let totalRotation = 0;
-  const INTERVAL = 5000, SWIPE_THRESHOLD = 40;
+  let isFlipped      = false;
+  let paused         = false;
+  let progress       = 0;
+  let rafId          = null;
+  let lastTime       = null;
+  let totalRotation  = 0;
+  const INTERVAL     = 5000;
+  const SWIPE_THRESH = 40;
 
-  function setDots(f) {
-    dot0.classList.toggle('active',!f); dot1.classList.toggle('active',f);
-    dot2.classList.toggle('active',!f); dot3.classList.toggle('active',f);
+  function setDots(flipped) {
+    dots[0].classList.toggle('active', !flipped);
+    dots[1].classList.toggle('active',  flipped);
+    dots[2].classList.toggle('active', !flipped);
+    dots[3].classList.toggle('active',  flipped);
   }
 
   function flipCard() {
-    isFlipped = !isFlipped;
-    // FIX 4: 360° spin — add 360 to current rotation, land on correct face
-    totalRotation += 180; // 180° to reveal the other face (was 360 = same face)
+    isFlipped      = !isFlipped;
+    totalRotation += 180;
     card.style.transform = `rotateY(${totalRotation}deg)`;
-    // Faces are at 0° and 180° — the flip-back has rotateY(180deg) baked in
-    // After each 360 spin the front/back logic alternates
-    setDots(isFlipped); progress = 0; lastTime = null; bar.style.width = '0%';
+    setDots(isFlipped);
+    progress = 0; lastTime = null; bar.style.width = '0%';
   }
 
   function tick(ts) {
     if (!paused) {
-      if (lastTime===null) lastTime=ts;
+      if (lastTime === null) lastTime = ts;
       const delta = ts - lastTime; lastTime = ts;
-      progress += (delta/INTERVAL)*100;
-      bar.style.width = Math.min(progress,100)+'%';
+      progress += (delta / INTERVAL) * 100;
+      bar.style.width = Math.min(progress, 100) + '%';
       if (progress >= 100) flipCard();
-    } else { lastTime = null; }
+    } else {
+      lastTime = null;
+    }
     rafId = requestAnimationFrame(tick);
   }
 
-  /* Swipe detection */
-  let tStartX=0, tStartY=0, isSwiping=false, holdTmt=null;
+  /* Swipe / hold detection */
+  let tStartX = 0, tStartY = 0, isSwiping = false, holdTimer = null;
 
   scene.addEventListener('touchstart', e => {
-    tStartX = e.touches[0].clientX;
-    tStartY = e.touches[0].clientY;
+    tStartX  = e.touches[0].clientX;
+    tStartY  = e.touches[0].clientY;
     isSwiping = false;
-    holdTmt = setTimeout(() => { paused = true; }, 160);
-  }, {passive:true});
+    holdTimer = setTimeout(() => { paused = true; }, 160);
+  }, { passive: true });
 
   scene.addEventListener('touchmove', e => {
     const dx = Math.abs(e.touches[0].clientX - tStartX);
     const dy = Math.abs(e.touches[0].clientY - tStartY);
-    if (dx > 12 && dx > dy) { isSwiping = true; clearTimeout(holdTmt); e.preventDefault(); }
-  }, {passive:false});
+    if (dx > 12 && dx > dy) { isSwiping = true; clearTimeout(holdTimer); e.preventDefault(); }
+  }, { passive: false });
 
   scene.addEventListener('touchend', e => {
-    clearTimeout(holdTmt);
+    clearTimeout(holdTimer);
     const dx = e.changedTouches[0].clientX - tStartX;
-    if (isSwiping && Math.abs(dx) > SWIPE_THRESHOLD) {
+    if (isSwiping && Math.abs(dx) > SWIPE_THRESH) {
       flipCard(); paused = false;
     } else {
-      paused = false; // was held or small movement — just unpause
+      paused = false;
     }
     isSwiping = false;
-  }, {passive:true});
-  // Tap-to-flip and mouse listeners intentionally removed — swipe only
+  }, { passive: true });
 
-  window._flipCard = { get paused(){return paused;}, set paused(v){paused=v;} };
+  /* Expose pause state for external toggle button */
+  window._flipCard = {
+    get paused() { return paused; },
+    set paused(v) { paused = v; }
+  };
 
+  /* Start RAF only when section is visible */
   const venueIO = new IntersectionObserver(entries => {
-    if (entries[0].isIntersecting && !rafId) { lastTime=null; rafId=requestAnimationFrame(tick); }
-    else if (!entries[0].isIntersecting && rafId) { cancelAnimationFrame(rafId); rafId=null; }
-  }, {threshold:.3});
+    if (entries[0].isIntersecting && !rafId) {
+      lastTime = null;
+      rafId = requestAnimationFrame(tick);
+    } else if (!entries[0].isIntersecting && rafId) {
+      cancelAnimationFrame(rafId); rafId = null;
+    }
+  }, { threshold: .3 });
   venueIO.observe(document.getElementById('venue'));
 })();
 
 function toggleFlipPause() {
-  const fc = window._flipCard; fc.paused = !fc.paused;
-  document.getElementById('icon-pause').style.display = fc.paused ? 'none' : 'block';
-  document.getElementById('icon-play').style.display  = fc.paused ? 'block': 'none';
+  const fc = window._flipCard;
+  fc.paused = !fc.paused;
+  document.getElementById('icon-pause').style.display = fc.paused ? 'none'  : 'block';
+  document.getElementById('icon-play').style.display  = fc.paused ? 'block' : 'none';
   document.getElementById('ctrl-label').textContent   = fc.paused ? 'Auto-flip off' : 'Auto-flip on';
 }
 
-/* ══════════════════════════════════════════════════
+/* ══════════════════════════════════════════════════════
    COUNTDOWN
-══════════════════════════════════════════════════ */
-function tick2() {
+══════════════════════════════════════════════════════ */
+function tickCountdown() {
   const diff = new Date('2026-08-19T00:00:00') - new Date();
-  if (diff<=0) { ['cdays','chours','cmins','csecs'].forEach(id=>document.getElementById(id).textContent='00'); return; }
-  document.getElementById('cdays').textContent  = String(Math.floor(diff/86400000)).padStart(2,'0');
-  document.getElementById('chours').textContent = String(Math.floor((diff%86400000)/3600000)).padStart(2,'0');
-  document.getElementById('cmins').textContent  = String(Math.floor((diff%3600000)/60000)).padStart(2,'0');
-  document.getElementById('csecs').textContent  = String(Math.floor((diff%60000)/1000)).padStart(2,'0');
-}
-tick2(); setInterval(tick2, 1000);
-
-/* ══════════════════════════════════════════════════
-   FIX 2: SMOOTH SCROLL FADE-IN
-══════════════════════════════════════════════════ */
-const io = new IntersectionObserver(entries =>
-  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('vis'); }),
-  { threshold:.12, rootMargin:'0px 0px -40px 0px' }
-);
-document.querySelectorAll('.fi').forEach(el => io.observe(el));
-
-/* Scratch init */
-let scratchInited = false;
-const scratchIO = new IntersectionObserver(entries => {
-  if (entries[0].isIntersecting && !scratchInited) {
-    scratchInited = true; [0,1,2].forEach(i => initScratch(i));
+  if (diff <= 0) {
+    ['cdays','chours','cmins','csecs'].forEach(id =>
+      document.getElementById(id).textContent = '00'
+    );
+    return;
   }
-}, {threshold:.25});
+  document.getElementById('cdays').textContent  = String(Math.floor(diff / 86400000)).padStart(2, '0');
+  document.getElementById('chours').textContent = String(Math.floor((diff % 86400000) / 3600000)).padStart(2, '0');
+  document.getElementById('cmins').textContent  = String(Math.floor((diff % 3600000)  / 60000)).padStart(2, '0');
+  document.getElementById('csecs').textContent  = String(Math.floor((diff % 60000)    / 1000)).padStart(2, '0');
+}
+tickCountdown();
+setInterval(tickCountdown, 1000);
+
+/* ══════════════════════════════════════════════════════
+   SCROLL FADE-IN
+══════════════════════════════════════════════════════ */
+const scrollIO = new IntersectionObserver(entries =>
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('vis'); }),
+  { threshold: .12, rootMargin: '0px 0px -40px 0px' }
+);
+document.querySelectorAll('.fi').forEach(el => scrollIO.observe(el));
+
+/* Init scratch when section scrolls into view */
+let scratchInited = false;
+const scratchIO   = new IntersectionObserver(entries => {
+  if (entries[0].isIntersecting && !scratchInited) {
+    scratchInited = true;
+    [0, 1, 2].forEach(i => initScratch(i));
+  }
+}, { threshold: .25 });
 scratchIO.observe(document.getElementById('scratch'));
 
-/* ══════════════════════════════════════════════════
-   FIX 1: SCROLL HEARTS — active in ALL sections
-   FIX 2: Heart colours for premium feel
-══════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════
+   SCROLL HEARTS — floating on scroll & touch drag
+══════════════════════════════════════════════════════ */
 const HEART_PALETTE = [
-  {fill:'#5D6D50',glow:'rgba(93,109,80,0.5)'},
-  {fill:'#D4AF37',glow:'rgba(212,175,55,0.55)'},
-  {fill:'#AEC29B',glow:'rgba(174,194,155,0.45)'},
-  {fill:'#C4857A',glow:'rgba(196,133,122,0.5)'},
-  {fill:'#EDD264',glow:'rgba(237,210,100,0.5)'},
-  {fill:'#A88B20',glow:'rgba(168,139,32,0.45)'},
-  {fill:'#C8D9B8',glow:'rgba(200,217,184,0.4)'},
-  {fill:'#F5F1E5',glow:'rgba(245,241,229,0.35)'},
-  {fill:'#E8A89F',glow:'rgba(232,168,159,0.45)'},
-  {fill:'#3D4D38',glow:'rgba(61,77,56,0.5)'},
+  { fill: '#5D6D50', glow: 'rgba(93,109,80,0.5)'    },
+  { fill: '#D4AF37', glow: 'rgba(212,175,55,0.55)'  },
+  { fill: '#AEC29B', glow: 'rgba(174,194,155,0.45)' },
+  { fill: '#C4857A', glow: 'rgba(196,133,122,0.5)'  },
+  { fill: '#EDD264', glow: 'rgba(237,210,100,0.5)'  },
+  { fill: '#A88B20', glow: 'rgba(168,139,32,0.45)'  },
+  { fill: '#C8D9B8', glow: 'rgba(200,217,184,0.4)'  },
+  { fill: '#F5F1E5', glow: 'rgba(245,241,229,0.35)' },
+  { fill: '#E8A89F', glow: 'rgba(232,168,159,0.45)' },
+  { fill: '#3D4D38', glow: 'rgba(61,77,56,0.5)'     },
 ];
 
 function heartSVG(fill, size) {
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${size}" height="${size}"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="${fill}"/></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="${size}" height="${size}">`
+    + `<path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09`
+    + `C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" fill="${fill}"/></svg>`;
 }
 
-let lastScrollY = window.scrollY, heartThrottle = 0;
+let lastScrollY    = window.scrollY;
+let heartThrottle  = 0;
 
-// FIX 1: NO hero guard — hearts everywhere during scroll
 window.addEventListener('scroll', () => {
-  const now = Date.now();
-  if (now - heartThrottle < 55) return; heartThrottle = now;
+  const now   = Date.now();
+  if (now - heartThrottle < 55) return;
+  heartThrottle = now;
   const delta = Math.abs(window.scrollY - lastScrollY);
-  if (delta < 3) return; lastScrollY = window.scrollY;
-  const count = Math.min(5, Math.floor(delta/8)+2);
+  if (delta < 3) return;
+  lastScrollY = window.scrollY;
+  const count = Math.min(5, Math.floor(delta / 8) + 2);
   for (let i = 0; i < count; i++) spawnHeart(null);
-}, {passive:true});
+}, { passive: true });
 
-/* Touch drag burst — everywhere */
-let touchTimer = 0;
+let touchHeartTimer = 0;
 document.addEventListener('touchmove', e => {
-  const now = Date.now(); if (now - touchTimer < 80) return; touchTimer = now;
+  const now = Date.now();
+  if (now - touchHeartTimer < 80) return;
+  touchHeartTimer = now;
   const t = e.touches[0];
-  for (let i = 0; i < 3; i++) spawnHeart({x:t.clientX+(Math.random()-.5)*30, y:t.clientY+(Math.random()-.5)*30});
-}, {passive:true});
+  for (let i = 0; i < 3; i++) {
+    spawnHeart({
+      x: t.clientX + (Math.random() - .5) * 30,
+      y: t.clientY + (Math.random() - .5) * 30
+    });
+  }
+}, { passive: true });
 
 function spawnHeart(pos) {
-  const pal  = HEART_PALETTE[Math.floor(Math.random()*HEART_PALETTE.length)];
-  const size = 10 + Math.floor(Math.random()*14);
+  const pal  = HEART_PALETTE[Math.floor(Math.random() * HEART_PALETTE.length)];
+  const size = 10 + Math.floor(Math.random() * 14);
   const el   = document.createElement('div');
   el.className = 'heart-particle';
   el.innerHTML = heartSVG(pal.fill, size);
   el.style.filter = `drop-shadow(0 0 3px ${pal.glow})`;
-
-  const x = pos ? pos.x : 15 + Math.random()*(window.innerWidth-30);
-  const y = pos ? pos.y : window.scrollY + window.innerHeight*(0.2+Math.random()*0.6);
-  const riseY  = -(60+Math.random()*110);
-  const rot1   = (Math.random()-.5)*40;
-  const rot2   = rot1 + (Math.random()-.5)*55;
-  const dur    = 1.1 + Math.random()*1.1;
-  const startS = 0.5 + Math.random()*0.65;
-
-  el.style.cssText += `left:${x}px;top:${y}px;--hy:${riseY}px;--hr:${rot1}deg;--hr2:${rot2}deg;--hs:${startS};animation-duration:${dur}s;`;
+  const x      = pos ? pos.x : 15 + Math.random() * (window.innerWidth - 30);
+  const y      = pos ? pos.y : window.scrollY + window.innerHeight * (.2 + Math.random() * .6);
+  const riseY  = -(60 + Math.random() * 110);
+  const rot1   = (Math.random() - .5) * 40;
+  const rot2   = rot1 + (Math.random() - .5) * 55;
+  const dur    = 1.1 + Math.random() * 1.1;
+  const startS = .5  + Math.random() * .65;
+  el.style.cssText += `left:${x}px;top:${y}px;`
+    + `--hy:${riseY}px;--hr:${rot1}deg;--hr2:${rot2}deg;--hs:${startS};`
+    + `animation-duration:${dur}s;`;
   document.body.appendChild(el);
-  setTimeout(() => el.remove(), dur*1000+120);
+  setTimeout(() => el.remove(), dur * 1000 + 120);
 }
 </script>
 </body>
