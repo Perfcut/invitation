@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>
-  Wedding Invitation — Thameem &amp; Rifaya</title>
+  <title>Wedding Invitation — Thameem &amp; Rifaya</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Lato:wght@300;400;700&family=Amiri:wght@400;700&display=swap" rel="stylesheet">
@@ -12,7 +11,6 @@
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
 
   <style>
-  /* ═══════════════════════ TOKENS ═══════════════════════ */
   :root {
     --ivory:#F5F1E5; --ivory-mid:#EDE8D6; --ivory-deep:#E0D9C4; --cream:#FAF8F0;
     --olive:#5D6D50; --olive-deep:#3D4D38; --olive-dark:#28341E;
@@ -31,7 +29,6 @@
   body.unlocked { overflow-y:auto; }
   body.popup-open { overflow:hidden !important; }
 
-  /* ═══════════════════════ MUSIC BTN ═══════════════════════ */
   #music-btn {
     position:fixed; top:18px; right:18px; z-index:1001;
     width:44px; height:44px; border-radius:50%;
@@ -55,15 +52,12 @@
   }
   #music-toast.show { opacity:1; }
 
-  /* ═══════════════════════ CURTAIN ═══════════════════════ */
   .curtain-overlay { position:fixed; inset:0; z-index:300; cursor:pointer; }
   .curtain-overlay.opened { pointer-events:none; }
   .curtain { position:absolute; top:0; width:52%; height:100%; overflow:hidden; will-change:transform; }
   .curtain.left  { left:0;  box-shadow: 8px 0 60px rgba(0,0,0,0.75); }
   .curtain.right { right:0; box-shadow:-8px 0 60px rgba(0,0,0,0.75); }
   .fabric { width:100%; height:100%; transform-origin:top center; will-change:transform; }
-
-  /* FIX 7: Symmetric fabric gradients — both match perfectly */
   .curtain.left .fabric {
     background:
       repeating-linear-gradient(90deg,
@@ -86,24 +80,16 @@
         #0d1509 0%,#141d0e 8%,#1e2a15 18%,#28341E 30%,
         #3D4D38 45%,#4a5e3a 52%,#3D4D38 62%,#28341E 75%,#141d0e 90%,#0d1509 100%);
   }
-
-  /* FIX 7: Symmetric gold trim — identical gradient, just mirrored position */
   .curtain.left .fabric::after,
   .curtain.right .fabric::after {
     content:''; position:absolute; top:0; bottom:0; width:3px;
     background:linear-gradient(to bottom,
-      transparent 0%,
-      rgba(212,175,55,0.2) 8%,
-      var(--gold-dk) 18%,
-      var(--gold-lt) 42%,
-      var(--gold)    62%,
-      var(--gold-dk) 86%,
-      transparent   100%);
+      transparent 0%,rgba(212,175,55,0.2) 8%,var(--gold-dk) 18%,
+      var(--gold-lt) 42%,var(--gold) 62%,var(--gold-dk) 86%,transparent 100%);
     opacity:0.88;
   }
   .curtain.left  .fabric::after { right:0; }
   .curtain.right .fabric::after { left:0; }
-
   .curtain-rod {
     position:absolute; top:0; left:0; right:0; height:18px; z-index:10; pointer-events:none;
     background:linear-gradient(to bottom,
@@ -124,8 +110,6 @@
       rgba(212,175,55,0.72) 50%, rgba(212,175,55,0.5) 80%, transparent);
     pointer-events:none;
   }
-
-  /* Seal */
   .seal-wrap { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:12; transition:transform 1.4s cubic-bezier(0.4,0,0.2,1),opacity 1.2s ease; }
   .seal-img { width:84px; height:84px; object-fit:contain; filter:drop-shadow(0 0 20px rgba(212,175,55,0.9)); animation:sealGlow 3s ease-in-out infinite; }
   @keyframes sealGlow {
@@ -134,47 +118,32 @@
   }
   .seal-fallback { width:84px; height:84px; border-radius:50%; background:radial-gradient(circle at 35% 35%,var(--gold-lt),var(--gold-dk)); border:2px solid var(--gold); display:flex; align-items:center; justify-content:center; font-family:'Cinzel',serif; font-size:10px; color:var(--ivory); text-align:center; line-height:1.4; filter:drop-shadow(0 0 20px rgba(212,175,55,0.9)); animation:sealGlow 3s ease-in-out infinite; }
   .seal-wrap.lifted { transform:translate(-50%,-50%) translateY(-140px) scale(0.7); opacity:0; }
-
-  /* Tap prompt */
   .tap-prompt { position:absolute; bottom:50px; left:50%; transform:translateX(-50%); font-family:'Cinzel',serif; font-size:9.5px; letter-spacing:4px; color:var(--gold); text-transform:uppercase; white-space:nowrap; text-align:center; z-index:12; transition:opacity .5s ease; text-shadow:0 0 24px rgba(212,175,55,0.65); }
   .tap-prompt span { display:block; font-size:22px; margin-bottom:10px; animation:arrowUp 1.8s ease-in-out infinite; }
   @keyframes arrowUp { 0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);} }
   .tap-prompt.gone { opacity:0; pointer-events:none; }
 
-  /* ═══════════════════════ DUA OVERLAY ═══════════════════════ */
   #dua-overlay {
     position:fixed; inset:0; z-index:250;
     background:radial-gradient(ellipse 80% 80% at 50% 50%,rgba(40,52,30,0.98) 0%,rgba(20,28,14,1) 100%);
     display:flex; flex-direction:column; align-items:center; justify-content:center;
     padding:40px 30px; opacity:0; pointer-events:none;
   }
-  /* Ambient glow orb */
   #dua-overlay::before {
     content:''; position:absolute; width:320px; height:320px; border-radius:50%;
     background:radial-gradient(circle,rgba(212,175,55,0.1) 0%,transparent 70%);
     top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none;
   }
   .dua-inner { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; width:100%; max-width:360px; }
-  .dua-star-top {
-  width:50%; height:1px; margin:0 auto 22px;
-    background:linear-gradient(90deg, transparent 0%, var(--gold-lt) 30%, var(--gold) 50%, var(--gold-lt) 70%, transparent 100%);
-    opacity:0.7;}
-  .dua-star-line { flex:1; .
-  height:1px; background:linear-gradient(to right, transparent 0%, var(--gold) 100%); opacity:0.75;  }
+  .dua-star-top { width:50%; height:1px; margin:0 auto 22px; background:linear-gradient(90deg, transparent 0%, var(--gold-lt) 30%, var(--gold) 50%, var(--gold-lt) 70%, transparent 100%); opacity:0.7; }
+  .dua-star-line { flex:1; height:1px; background:linear-gradient(to right, transparent 0%, var(--gold) 100%); opacity:0.75; }
   .dua-star-line.r { background:linear-gradient(to left, transparent 0%, var(--gold) 100%); opacity:0.75; }
   .dua-star-gem { width:7px; height:7px; background:var(--gold); transform:rotate(45deg); flex-shrink:0; opacity:0.75; box-shadow:0 0 8px rgba(212,175,55,0.6); }
   .dua-arabic { font-family:'Amiri',serif; font-size:clamp(18px,5.5vw,24px); color:var(--gold-lt); direction:rtl; text-align:center; line-height:2.1; letter-spacing:1px; margin-bottom:26px; text-shadow:0 0 30px rgba(212,175,55,0.25); width:100%; }
-
-  /* FIX 8: Gold rule — fully visible, correct opacity */
-  .dua-rule {
-    width:60%; height:1px; margin:0 auto 22px;
-    background:linear-gradient(90deg, transparent 0%, var(--gold-lt) 30%, var(--gold) 50%, var(--gold-lt) 70%, transparent 100%);
-    opacity:0.7;
-  }
+  .dua-rule { width:60%; height:1px; margin:0 auto 22px; background:linear-gradient(90deg, transparent 0%, var(--gold-lt) 30%, var(--gold) 50%, var(--gold-lt) 70%, transparent 100%); opacity:0.7; }
   .dua-transliteration { font-family:'Cormorant Garamond','Georgia',serif; font-size:clamp(12px,3.2vw,14px); font-style:italic; color:var(--sage-lt); text-align:center; line-height:2.1; max-width:300px; margin-bottom:28px; }
   .dua-meaning { font-family:'Lato',sans-serif; font-size:8px; letter-spacing:3px; color:var(--gold-dk); text-transform:uppercase; opacity:0.75; text-align:center; }
 
-  /* ═══════════════════════ HEARTS ═══════════════════════ */
   .heart-particle {
     position:fixed; pointer-events:none; z-index:997;
     opacity:0; animation:heartFloat linear forwards;
@@ -186,7 +155,6 @@
     100% { opacity:0; transform:translateY(var(--hy)) rotate(var(--hr2)) scale(0.1); }
   }
 
-  /* ═══════════════════════ HERO ═══════════════════════ */
   #hero {
     min-height:100dvh;
     background:var(--olive-dark);
@@ -198,7 +166,6 @@
   }
   #hero::before { content:''; position:absolute; inset:0; background-image:radial-gradient(circle,rgba(212,175,55,0.045) 1px,transparent 1px); background-size:28px 28px; pointer-events:none; }
   #hero::after { content:''; position:absolute; width:500px; height:500px; border-radius:50%; border:1px solid rgba(212,175,55,0.07); top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none; }
-
   .hero-content {
     width:100%; max-width:400px; text-align:center; position:relative; opacity:0;
     transition:opacity 1.2s var(--ease-out-expo);
@@ -209,14 +176,12 @@
     padding:48px 22px 48px; overflow:hidden;
   }
   .hero-content.show { opacity:1; }
-
   .decor-lamp { position:absolute; width:54px; top:128px; }
-  .decor-lamp.l { left:3px; opacity:2.13; filter:brightness(100%); transform:scaleX(-1); }
+  .decor-lamp.l { left:3px; opacity:0.13; filter:brightness(100%); transform:scaleX(-1); }
   .decor-lamp.r { right:3px; opacity:0.13; }
   .decor-flower { position:absolute; width:66px; bottom:10px; }
-  .decor-flower.l { left:0px; opacity:2.13; filter:brightness(100%); transform:scaleX(-1); }
+  .decor-flower.l { left:0px; opacity:0.13; filter:brightness(100%); transform:scaleX(-1); }
   .decor-flower.r { right:0; opacity:0.13; }
-
   .c-frame { border:1px solid rgba(212,175,55,0.28); border-radius:60px 60px 44px 44px; padding:28px 20px 24px; position:relative; background:rgba(255,255,255,0.35); overflow:hidden; }
   .c-frame::before,.c-frame::after { content:''; position:absolute; left:50%; transform:translateX(-50%); width:55%; height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); opacity:0.55; }
   .c-frame::before { top:18px; } .c-frame::after { bottom:18px; }
@@ -225,8 +190,6 @@
   .fc.tr { top:8px; right:8px; border-width:1px 1px 0 0; border-radius:0 6px 0 0; }
   .fc.bl { bottom:8px; left:8px; border-width:0 0 1px 1px; border-radius:0 0 0 6px; }
   .fc.br { bottom:8px; right:8px; border-width:0 1px 1px 0; border-radius:0 0 6px 0; }
-
-  /* FIX 2: Stagger reveals with smooth easing */
   .r { opacity:0; transform:translateY(18px); transition:opacity .7s var(--ease-out-expo), transform .7s var(--ease-out-expo); }
   .hero-content.show .r { opacity:1; transform:none; }
   .hero-content.show .r.d1 { transition-delay:.2s; }
@@ -236,7 +199,6 @@
   .hero-content.show .r.d5 { transition-delay:.9s; }
   .hero-content.show .r.d6 { transition-delay:1.08s; }
   .hero-content.show .r.d7 { transition-delay:1.25s; }
-
   .bismillah { font-family:'Amiri',serif; font-size:clamp(16px,4.5vw,20px); color:var(--olive-deep); text-align:center; letter-spacing:1px; line-height:1.5; direction:rtl; }
   .subheader { font-family:'Cormorant Garamond','Georgia',serif; font-size:clamp(9px,2.2vw,11px); color:var(--gold-dk); text-align:center; letter-spacing:1.5px; font-style:italic; margin-top:4px; }
   .g-div { width:55%; height:1px; margin:14px auto; background:linear-gradient(90deg,transparent,var(--gold),transparent); opacity:0.5; }
@@ -260,21 +222,16 @@
   .scroll-cue span { display:block; font-size:16px; margin-top:6px; animation:arrowDown 2s ease-in-out infinite; }
   @keyframes arrowDown { 0%,100%{transform:translateY(0);}50%{transform:translateY(5px);} }
 
-  /* ═══════════════════════ SCRATCH ═══════════════════════ */
   #scratch { background:var(--olive-deep); padding:100px 20px 90px; text-align:center; position:relative; overflow:hidden; }
   #scratch::before,#scratch::after { content:''; position:absolute; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); opacity:0.3; }
   #scratch::before { top:0; } #scratch::after { bottom:0; }
   .reveal-tag { font-family:'Cinzel',serif; font-size:9px; letter-spacing:6px; color:var(--gold); opacity:0.7; margin-bottom:14px; }
   .reveal-title { font-family:'Cormorant Garamond','Georgia',serif; font-size:clamp(24px,6vw,36px); font-style:italic; color:var(--ivory); line-height:1.25; margin-bottom:4px; }
   .reveal-sub { font-family:'Lato',sans-serif; font-size:10px; letter-spacing:3px; color:var(--sage-lt); text-transform:uppercase; margin-bottom:44px; }
-
-  /* FIX 3: Hearts in strict row, larger & perfect shape */
   .s-circles { display:flex; justify-content:center; align-items:flex-start; gap:16px; flex-wrap:nowrap; }
   .s-unit { display:flex; flex-direction:column; align-items:center; flex-shrink:0; }
-  /* Heart clip using SVG clip-path via CSS */
   .s-wrap {
-    width:100px; height:96px;
-    position:relative; overflow:hidden;
+    width:100px; height:96px; position:relative; overflow:hidden;
     clip-path:path('M50,24 C50,11 36,3 22,3 C7,3 2,17 2,27 C2,52 26,69 50,93 C74,69 98,52 98,27 C98,17 93,3 78,3 C64,3 50,11 50,24Z');
     filter:drop-shadow(0 0 10px rgba(212,175,55,0.45)) drop-shadow(0 5px 14px rgba(0,0,0,0.5));
   }
@@ -282,17 +239,14 @@
     position:absolute; inset:0;
     display:flex; align-items:center; justify-content:center;
     font-family:'Cinzel',serif; font-size:clamp(14px,4.2vw,18px); color:var(--ivory);
-    background:rgba(61,77,56,0.93); letter-spacing:0.4px;
-    padding-top:10px; /* shift up into heart visual centre */
+    background:rgba(61,77,56,0.93); letter-spacing:0.4px; padding-top:10px;
     transition:color .4s, background .4s, transform .5s cubic-bezier(0.175,0.885,0.32,1.275);
   }
   .s-text.revealed { color:var(--gold-lt); background:rgba(40,52,30,0.97); transform:scale(1.06); }
   .s-canvas { position:absolute; inset:0; cursor:crosshair; touch-action:none; }
-
   .s-footer { font-family:'Cormorant Garamond','Georgia',serif; font-size:clamp(16px,4vw,20px); font-style:italic; color:var(--sage-lt); margin-top:52px; opacity:0; transition:opacity 1.2s ease; }
   .s-footer.on { opacity:1; }
 
-  /* ── PAPER POPUP ── */
   .paper-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.58); backdrop-filter:blur(5px); z-index:599; opacity:0; pointer-events:none; transition:opacity .4s ease; }
   .paper-backdrop.on { opacity:1; pointer-events:auto; }
   .paper-popup { position:fixed; top:50%; left:50%; transform:translate(-50%,-200%) rotate(-3deg) scale(0.85); z-index:700; width:160px; opacity:0; pointer-events:none; }
@@ -304,7 +258,7 @@
   .paper-body { background:var(--olive-deep); border-radius:2px 2px 5px 5px; padding:20px 16px 24px; border:1px solid rgba(212,175,55,0.2); box-shadow:0 16px 40px rgba(0,0,0,0.5),0 3px 10px rgba(0,0,0,0.3),inset 0 1px 0 rgba(255,255,255,0.06); text-align:center; position:relative; }
   .paper-body::before { content:''; position:absolute; top:-3px; left:0; right:0; height:4px; background:repeating-linear-gradient(90deg,var(--olive-deep) 0px,var(--olive-deep) 4px,transparent 4px,transparent 7px); }
   .paper-body::after  { content:''; position:absolute; top:12px; left:14px; right:14px; height:1px; background:linear-gradient(90deg,transparent,rgba(212,175,55,0.35),transparent); }
-  .paper-tag   { font-family:'Cinzel',serif; font-size:6px; letter-spacing:3px; color:var(--gold-lt); text-transform:uppercase; opacity:2.75; margin-bottom:8px; display:block; }
+  .paper-tag   { font-family:'Cinzel',serif; font-size:6px; letter-spacing:3px; color:var(--gold-lt); text-transform:uppercase; margin-bottom:8px; display:block; }
   .paper-date  { font-family:'Cormorant Garamond',serif; font-size:32px; font-style:italic; color:var(--gold-lt); line-height:1; display:block; margin-bottom:2px; }
   .paper-month { font-family:'Lato',sans-serif; font-size:7px; letter-spacing:2.5px; color:var(--sage-lt); text-transform:uppercase; font-weight:300; display:block; margin-bottom:12px; }
   .paper-heart { font-size:20px; color:var(--gold); display:block; margin-bottom:10px; animation:hpulse 2s ease-in-out infinite; }
@@ -313,7 +267,6 @@
   .paper-rule  { display:block; width:55%; height:1px; background:linear-gradient(90deg,transparent,rgba(212,175,55,0.3),transparent); margin:12px auto 0; }
   .paper-tap   { font-family:'Lato',sans-serif; font-size:6px; letter-spacing:1.5px; color:rgba(200,217,184,0.45); display:block; margin-top:8px; }
 
-  /* ═══════════════════════ COUNTDOWN ═══════════════════════ */
   #countdown { background:var(--ivory); padding:100px 20px 90px; text-align:center; position:relative; }
   .cd-bow { width:110px; margin:0 auto 28px; opacity:0.55; }
   .cd-bow img { width:100%; object-fit:contain; }
@@ -324,7 +277,6 @@
   .cd-num  { font-family:'Cinzel',serif; font-size:clamp(22px,6vw,32px); color:var(--olive-deep); display:block; line-height:1; margin-bottom:7px; }
   .cd-name { font-family:'Lato',sans-serif; font-size:7.5px; letter-spacing:2px; color:var(--gold-dk); text-transform:uppercase; }
 
-  /* ═══════════════════════ VENUE ═══════════════════════ */
   #venue { background:var(--olive-dark); padding:100px 20px 90px; text-align:center; position:relative; overflow:hidden; }
   #venue::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); opacity:0.3; }
   .venue-bg-glow { position:absolute; width:380px; height:380px; border-radius:50%; background:radial-gradient(circle,rgba(93,109,80,0.12) 0%,transparent 70%); top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none; }
@@ -332,31 +284,20 @@
   .venue-illus img { width:100%; object-fit:contain; filter:drop-shadow(0 8px 24px rgba(0,0,0,0.4)); }
   .venue-eyebrow { font-family:'Cinzel',serif; font-size:8px; letter-spacing:5px; color:var(--gold); opacity:0.7; text-transform:uppercase; margin-bottom:10px; display:block; }
   .venue-title-line { font-family:'Cormorant Garamond','Georgia',serif; font-size:clamp(22px,6vw,30px); font-style:italic; color:var(--ivory); line-height:1.2; margin-bottom:28px; }
-
   .swipe-hint { display:flex; align-items:center; justify-content:center; gap:10px; margin-bottom:16px; }
   .swipe-hint-line { width:28px; height:1px; background:linear-gradient(to right,transparent,rgba(212,175,55,0.4)); }
   .swipe-hint-line.r { background:linear-gradient(to left,transparent,rgba(212,175,55,0.4)); }
   .swipe-hint-text { font-family:'Lato',sans-serif; font-size:7.5px; letter-spacing:2.5px; color:var(--sage); opacity:0.6; text-transform:uppercase; }
-
   .venue-ctrl-row { display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:20px; }
   #pause-btn { width:34px; height:34px; border-radius:50%; border:1px solid rgba(212,175,55,0.3); background:rgba(212,175,55,0.08); cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background .3s,box-shadow .3s; }
   #pause-btn:hover { background:rgba(212,175,55,0.18); box-shadow:0 0 10px rgba(212,175,55,0.28); }
   #pause-btn svg { width:14px; height:14px; fill:var(--gold); }
   .venue-ctrl-label { font-family:'Lato',sans-serif; font-size:7px; letter-spacing:2px; color:var(--sage); text-transform:uppercase; opacity:0.55; }
-
   .flip-progress-wrap { max-width:320px; margin:0 auto 20px; height:2px; background:rgba(212,175,55,0.1); border-radius:2px; overflow:hidden; }
   .flip-progress-bar  { height:100%; background:linear-gradient(to right,var(--gold-dk),var(--gold-lt)); border-radius:2px; width:0%; transition:width .1s linear; }
-
-  /* FIX 4: 360° spin scene */
   .flip-scene { width:100%; max-width:320px; height:420px; margin:0 auto 28px; perspective:1200px; cursor:grab; position:relative; user-select:none; -webkit-user-select:none; }
   .flip-scene:active { cursor:grabbing; }
-  .flip-card {
-    width:100%; height:100%; position:relative;
-    transform-style:preserve-3d;
-    border-radius:28px;
-    /* transition set by JS for 360 spin */
-    transition:transform 1.05s cubic-bezier(0.45,0.05,0.15,1);
-  }
+  .flip-card { width:100%; height:100%; position:relative; transform-style:preserve-3d; border-radius:28px; transition:transform 1.05s cubic-bezier(0.45,0.05,0.15,1); }
   .flip-face { position:absolute; inset:0; backface-visibility:hidden; -webkit-backface-visibility:hidden; border-radius:28px; overflow:hidden; border:1px solid rgba(212,175,55,0.2); box-shadow:0 24px 60px rgba(0,0,0,0.5),0 0 0 1px rgba(212,175,55,0.1); }
   .flip-front { background:linear-gradient(160deg,var(--olive-deep) 0%,var(--olive-dark) 100%); }
   .flip-back  { background:linear-gradient(160deg,var(--olive-deep) 0%,var(--olive-dark) 100%); transform:rotateY(180deg); }
@@ -383,7 +324,6 @@
   .ffi-dot.active { background:var(--gold); transform:scale(1.3); box-shadow:0 0 6px rgba(212,175,55,0.5); }
   .flip-hold-hint { font-family:'Lato',sans-serif; font-size:7px; letter-spacing:1.5px; color:var(--sage); opacity:0.45; text-transform:uppercase; display:block; }
 
-  /* ═══════════════════════ MAP — FIX 5: 3 cards ═══════════════════════ */
   #map { position:relative; padding:100px 20px 90px; text-align:center; overflow:hidden; background:var(--olive-deep); }
   #map-video { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:0.18; pointer-events:none; }
   #map::before { content:''; position:absolute; inset:0; background:linear-gradient(180deg,var(--olive-dark) 0%,rgba(40,52,30,0.7) 50%,var(--olive-dark) 100%); z-index:1; pointer-events:none; }
@@ -409,7 +349,6 @@
   .map-sep-line.r { background:linear-gradient(to left,transparent,rgba(212,175,55,0.3)); }
   .map-sep-diamond { width:5px; height:5px; background:var(--gold); transform:rotate(45deg); opacity:0.5; }
 
-  /* ─── HIJRI ─── */
   #hijri { background:var(--ivory); padding:100px 20px 90px; text-align:center; position:relative; overflow:hidden; }
   #hijri::before { content:''; position:absolute; inset:0; background-image:radial-gradient(circle,rgba(93,109,80,0.06) 1px,transparent 1px); background-size:20px 20px; pointer-events:none; }
   .hj-eyebrow { font-family:'Cinzel',serif; font-size:7.5px; letter-spacing:5px; color:var(--gold-dk); text-transform:uppercase; opacity:0.75; margin-bottom:30px; display:block; }
@@ -431,7 +370,6 @@
   .hj-year-label { font-family:'Lato',sans-serif; font-size:7px; letter-spacing:2.5px; color:var(--sage); font-weight:300; text-transform:uppercase; }
   .hj-caption { font-family:'Cormorant Garamond','Georgia',serif; font-size:clamp(12px,3.2vw,14px); font-style:italic; color:var(--olive); line-height:1.95; max-width:270px; margin:0 auto; }
 
-  /* ─── LOVE ─── */
   #love { background:var(--ivory); padding:100px 20px 90px; text-align:center; position:relative; }
   .love-card { max-width:370px; margin:0 auto; background:var(--cream); border-radius:44px; padding:48px 28px 40px; border:1px solid rgba(212,175,55,0.22); box-shadow:0 24px 70px rgba(93,109,80,0.09); position:relative; }
   .love-card::before,.love-card::after { content:''; position:absolute; left:50%; transform:translateX(-50%); width:50%; height:1px; background:linear-gradient(90deg,transparent,var(--gold),transparent); opacity:0.45; }
@@ -443,12 +381,10 @@
   .love-from-label { font-family:'Cinzel',serif; font-size:9px; letter-spacing:2.5px; color:var(--gold-dk); }
   .love-from-name  { font-family:'Cormorant Garamond','Georgia',serif; font-size:clamp(18px,5vw,24px); font-style:italic; color:var(--olive-deep); margin-top:6px; line-height:1.3; }
 
-  /* ─── FOOTER ─── */
   footer { background:var(--olive-dark); padding:36px 20px; text-align:center; border-top:1px solid rgba(212,175,55,0.1); }
   footer a { font-family:'Lato',sans-serif; font-size:9.5px; letter-spacing:2px; color:var(--gold); opacity:0.35; text-decoration:none; transition:opacity .3s; }
   footer a:hover { opacity:0.65; }
 
-  /* FIX 2: Smooth scroll fade-in with stagger */
   .fi { opacity:0; transform:translateY(26px); transition:opacity .85s var(--ease-out-expo), transform .85s var(--ease-out-expo); }
   .fi.vis { opacity:1; transform:translateY(0); }
   .fi.d1{transition-delay:.05s;}.fi.d2{transition-delay:.15s;}
@@ -466,18 +402,17 @@
 </head>
 <body>
 
-<!-- FIX 6: audio WITHOUT loop — stops when finished -->
-<audio id="bgm" preload="none" ><source src="music.mp3" type="audio/mpeg"></audio>
+<!-- ✅ iOS FIX: playsinline + webkit-playsinline, no loop, no autoplay -->
+<audio id="bgm" preload="none" playsinline webkit-playsinline>
+  <source src="music.mp3" type="audio/mpeg">
+</audio>
 
-<!-- Music button: ic-off shown by default (not playing yet) -->
 <button id="music-btn" onclick="toggleMusic()" aria-label="Toggle music">
-  <!-- Playing icon -->
   <svg id="ic-on" viewBox="0 0 24 24" style="display:none">
     <path d="M9 18V5l12-2v13"/>
     <circle cx="6" cy="18" r="3"/>
     <circle cx="18" cy="16" r="3"/>
   </svg>
-  <!-- Muted icon (default) -->
   <svg id="ic-off" viewBox="0 0 24 24">
     <path d="M9 18V5l12-2v13"/>
     <circle cx="6" cy="18" r="3"/>
@@ -487,14 +422,9 @@
 </button>
 <div id="music-toast">&#x2669; Tap the music button to play</div>
 
-<!-- DUA OVERLAY -->
 <div id="dua-overlay">
   <div class="dua-inner">
-    <div class="dua-star-top">
-      <span class="dua-star-line"></span>
-      <span class="dua-star-gem"></span>
-      <span class="dua-star-line r"></span>
-    </div>
+    <div class="dua-star-top"></div>
     <p class="dua-arabic">
       بَارَكَ اللهُ لَكُمَا وَبَارَكَ عَلَيْكُمَا<br>وَجَمَعَ بَيْنَكُمَا فِي خَيْرٍ
     </p>
@@ -506,7 +436,6 @@
   </div>
 </div>
 
-<!-- PAPER POPUP -->
 <div class="paper-backdrop" id="paper-backdrop" onclick="closePaper()"></div>
 <div class="paper-popup" id="paper-popup" onclick="closePaper()">
   <div class="paper-body">
@@ -514,13 +443,12 @@
     <span class="paper-date">19</span>
     <span class="paper-month">August &middot;♡ 2026</span>
     <span class="paper-heart">&#x2665;</span>
-    <span class="paper-names">Thameem<br>&amp; <br> Rifaya</span>
+    <span class="paper-names">Thameem<br>&amp;<br>Rifaya</span>
     <span class="paper-rule"></span>
     <span class="paper-tap">tap to close</span>
   </div>
 </div>
 
-<!-- CURTAIN -->
 <div class="curtain-overlay" id="curtain-overlay" onclick="openCurtains()">
   <div class="curtain-rod" id="curtain-rod"></div>
   <div class="curtain left"  id="curtain-left" ><div class="fabric" id="fabric-left" ></div></div>
@@ -536,10 +464,8 @@
   </div>
 </div>
 
-<!-- HERO -->
 <section id="hero">
   <div class="hero-content" id="hero-content">
-    <!-- Decorative corner images -->
     <img src="cute-pokkie.png" alt="" onerror="this.style.display='none'" style="position:absolute;top:-14px;left:-10px;width:70px;opacity:0.88;transform:scaleX(-1);filter:drop-shadow(0 2px 8px rgba(0,0,0,0.22));pointer-events:none;z-index:2;">
     <img src="cute-pokkie.png" alt="" onerror="this.style.display='none'" style="position:absolute;top:-14px;right:-10px;width:70px;opacity:0.88;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.22));pointer-events:none;z-index:2;">
     <img src="bow-ilustration-pokkie.png" alt="" onerror="this.style.display='none'" style="position:absolute;bottom:-18px;left:50%;transform:translateX(-50%);width:90px;opacity:0.55;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.18));pointer-events:none;z-index:2;">
@@ -578,7 +504,6 @@
   </div>
 </section>
 
-<!-- SCRATCH -->
 <section id="scratch">
   <p class="reveal-tag fi d1">&#x2605; REVEAL &#x2605;</p>
   <h2 class="reveal-title fi d2">Scratch To Discover</h2>
@@ -591,7 +516,6 @@
   <p class="s-footer" id="sf">We are welcoming you.</p>
 </section>
 
-<!-- COUNTDOWN -->
 <section id="countdown">
   <div class="cd-bow fi d1"><img src="bow-ilustration-pokkie.png" alt="" onerror="this.parentElement.style.display='none'"></div>
   <p class="cd-label fi d2">Until the Big Day</p>
@@ -603,7 +527,6 @@
   </div>
 </section>
 
-<!-- VENUE -->
 <section id="venue">
   <div class="venue-bg-glow"></div>
   <div class="venue-illus fi d1"><img src="venue-illustration.png" alt="" onerror="this.parentElement.style.display='none'"></div>
@@ -624,7 +547,6 @@
   <div class="flip-progress-wrap fi d3"><div class="flip-progress-bar" id="flip-bar"></div></div>
   <div class="flip-scene fi d4" id="flip-scene">
     <div class="flip-card" id="flip-card">
-      <!-- FRONT: Nikkah -->
       <div class="flip-face flip-front">
         <div class="face-ribbon">
           <div class="face-event-badge"><span class="face-event-badge-dot"></span><span class="face-event-badge-text">Day One</span></div>
@@ -649,7 +571,6 @@
         </div>
         <div class="face-flip-indicator"><span class="ffi-dot active" id="dot0"></span><span class="ffi-dot" id="dot1"></span></div>
       </div>
-      <!-- BACK: Walima -->
       <div class="flip-face flip-back">
         <div class="face-ribbon">
           <div class="face-event-badge" style="background:rgba(212,175,55,0.1);border-color:rgba(212,175,55,0.25);">
@@ -682,14 +603,11 @@
   <span class="flip-hold-hint fi d5">hold card &nbsp;&middot;&nbsp; pause auto flip</span>
 </section>
 
-<!-- MAP — FIX 5: 3 locations -->
 <section id="map">
   <video id="map-video" autoplay muted loop playsinline><source src="video.mp4" type="video/mp4"></video>
   <span class="map-eyebrow fi d1">Find Us</span>
   <h2 class="map-title fi d2">Event Locations</h2>
   <div class="map-cards">
-
-    <!-- 1: Nikkah -->
     <div class="map-card fi d2">
       <div class="map-card-header">
         <span class="map-card-tag">Day One &nbsp;◇&nbsp; 19 August 2026</span>
@@ -706,10 +624,7 @@
         </a>
       </div>
     </div>
-
     <div class="map-sep fi d3"><span class="map-sep-line"></span><span class="map-sep-diamond"></span><span class="map-sep-line r"></span></div>
-
-    <!-- 2: Grand Fest -->
     <div class="map-card fi d3">
       <div class="map-card-header">
         <span class="map-card-tag">Day One &nbsp;◇&nbsp; 19 August 2026</span>
@@ -726,10 +641,7 @@
         </a>
       </div>
     </div>
-
     <div class="map-sep fi d4"><span class="map-sep-line"></span><span class="map-sep-diamond"></span><span class="map-sep-line r"></span></div>
-
-    <!-- 3: Walima -->
     <div class="map-card fi d4">
       <div class="map-card-header">
         <span class="map-card-tag">Day Two &nbsp;◇&nbsp; 20 August 2026</span>
@@ -746,11 +658,9 @@
         </a>
       </div>
     </div>
-
   </div>
 </section>
 
-<!-- HIJRI -->
 <section id="hijri">
   <span class="hj-eyebrow fi d1">&#x2605;&ensp;Islamic Calendar&ensp;&#x2605;</span>
   <div class="hj-card fi d2">
@@ -766,7 +676,6 @@
   <p class="hj-caption fi d3">"A blessed union sealed<br>in the month of the Prophet's ﷺ birth."</p>
 </section>
 
-<!-- LOVE -->
 <section id="love">
   <div class="love-card fi d1">
     <div class="bouq"><img src="flower-bouquet.png" alt="" onerror="this.parentElement.style.display='none'"></div>
@@ -780,32 +689,30 @@
 <footer><a href="https://instagram.com/perf.cut" target="_blank" rel="noopener noreferrer">Made by &#64;perf.cut</a></footer>
 
 <script>
-/* ══════════════════════════════════════════════════
-   FIX 6: iOS MUSIC — AudioContext unlock + no loop
-══════════════════════════════════════════════════ */
-let musicOn = false, audioUnlocked = false;
+/* ══════════════════════════════════════════════
+   iOS AUDIO — CLEAN, CORRECT IMPLEMENTATION
+   Rules applied:
+   1. playsinline + webkit-playsinline on <audio>
+   2. AudioContext created + resumed SYNCHRONOUSLY
+      inside the tap/click handler (the gesture)
+   3. bgm.play() chained inside ctx.resume().then()
+      so it inherits gesture trust
+   4. setIcons() helper used everywhere — no manual
+      display toggling that can be inverted
+   5. No autoplay, no setTimeout delays on play
+   6. toggleMusic() button also uses unlockThenPlay()
+══════════════════════════════════════════════ */
+
+let musicOn = false;
 const bgm = document.getElementById('bgm');
 
-// bgm ends naturally (no loop) — FIX 6
-bgm.addEventListener('ended', () => { musicOn = false; setIcons(false); });
+/* When track ends naturally, reset icon to muted */
+bgm.addEventListener('ended', () => {
+  musicOn = false;
+  setIcons(false);
+});
 
-function unlockAudio() {
-  if (audioUnlocked) return;
-  try {
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return;
-    const ctx = new AC();
-    const buf = ctx.createBuffer(1, 1, 22050);
-    const src = ctx.createBufferSource();
-    src.buffer = buf; src.connect(ctx.destination); src.start(0);
-    ctx.resume().then(() => { audioUnlocked = true; });
-  } catch(e) {}
-}
-
-['touchstart','touchend','click'].forEach(ev =>
-  document.addEventListener(ev, unlockAudio, { once:true, passive:true })
-);
-
+/* Single source of truth for icon state */
 function setIcons(playing) {
   document.getElementById('ic-on').style.display  = playing ? 'block' : 'none';
   document.getElementById('ic-off').style.display = playing ? 'none'  : 'block';
@@ -817,24 +724,58 @@ function showToast() {
   setTimeout(() => t.classList.remove('show'), 3800);
 }
 
-function toggleMusic() {
-  if (musicOn) {
-    bgm.pause(); bgm.currentTime = 0;
-    musicOn = false; setIcons(false);
+/*
+  iOS CRITICAL RULE:
+  AudioContext.resume() MUST be called synchronously
+  inside the user-gesture handler. bgm.play() MUST be
+  called inside the .then() of that same resume() —
+  NOT in a setTimeout, NOT after an await gap.
+  This keeps the gesture trust chain unbroken.
+*/
+function unlockThenPlay() {
+  const AC = window.AudioContext || window.webkitAudioContext;
+  if (AC) {
+    try {
+      const ctx = new AC();
+      /* resume() called sync inside gesture → play chained inside .then() */
+      ctx.resume().then(() => {
+        bgm.play()
+          .then(() => { musicOn = true; setIcons(true); })
+          .catch(() => { setIcons(false); showToast(); });
+      }).catch(() => {
+        /* resume() rejected — try play directly as last resort */
+        bgm.play()
+          .then(() => { musicOn = true; setIcons(true); })
+          .catch(() => { setIcons(false); showToast(); });
+      });
+    } catch (e) {
+      bgm.play()
+        .then(() => { musicOn = true; setIcons(true); })
+        .catch(() => { setIcons(false); showToast(); });
+    }
   } else {
-    bgm.play().then(() => { musicOn = true; setIcons(true); })
+    /* No Web Audio API (very old browser) — try direct play */
+    bgm.play()
+      .then(() => { musicOn = true; setIcons(true); })
       .catch(() => { setIcons(false); showToast(); });
   }
 }
 
-function tryAutoPlay() {
-  bgm.play().then(() => { musicOn = true; setIcons(true); })
-    .catch(() => { setIcons(false); showToast(); });
+/* Music button handler */
+function toggleMusic() {
+  if (musicOn) {
+    bgm.pause();
+    bgm.currentTime = 0;
+    musicOn = false;
+    setIcons(false);
+  } else {
+    unlockThenPlay();
+  }
 }
 
-/* ══════════════════════════════════════════════════
-   FIX 7: CONFETTI — one strong burst, symmetric
-══════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+   CONFETTI
+══════════════════════════════════════════════ */
 let _confettiCanvas = null, _myConfetti = null;
 function getConfetti() {
   if (!_myConfetti) {
@@ -849,10 +790,7 @@ function getConfetti() {
 function fireCannon() {
   const fire = getConfetti();
   const COLORS = ['#D4AF37','#EDD264','#F5E89A','#FFFFFF','#5D6D50','#AEC29B','#C4857A','#E8A89F','#C8D9B8','#F5F1E5'];
-  const BASE = { ticks:320, decay:0.92, gravity:1.0, startVelocity:60, scalar:1.05,
-                 shapes:['square','circle'], colors:COLORS };
-
-  // FIX 7: Symmetric — same particleCount from matching angles
+  const BASE = { ticks:320, decay:0.92, gravity:1.0, startVelocity:60, scalar:1.05, shapes:['square','circle'], colors:COLORS };
   fire({ ...BASE, angle:60,  spread:60, particleCount:80, origin:{x:0.1, y:0.88} });
   fire({ ...BASE, angle:120, spread:60, particleCount:80, origin:{x:0.9, y:0.88} });
   fire({ ...BASE, angle:75,  spread:65, particleCount:80, origin:{x:0.3, y:0.9}  });
@@ -860,33 +798,31 @@ function fireCannon() {
   fire({ ...BASE, angle:90,  spread:80, particleCount:100, origin:{x:0.5, y:0.88}, startVelocity:65 });
 }
 
-/* ══════════════════════════════════════════════════
-   GSAP CURTAIN PHYSICS
-══════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+   CURTAIN — openCurtains() is the FIRST user tap.
+   iOS trusts this gesture, so unlockThenPlay()
+   called here will succeed on iOS Safari.
+══════════════════════════════════════════════ */
 let curtainOpened = false;
-function openCurtains() {
-  if (curtainOpened) return; curtainOpened = true;
-  unlockAudio();
 
-  // Play music on curtain tap — this IS the user gesture, so iOS allows it
-    // Auto-play music
-      bgm.play().then(() => {
-        musicOn = true;
-        document.getElementById('ic-on').style.display  = 'none';
-        document.getElementById('ic-off').style.display = 'block';
-      }).catch(() => {});
-    
+function openCurtains() {
+  if (curtainOpened) return;
+  curtainOpened = true;
+
+  /* ✅ Start music here — this IS the user gesture, iOS allows it */
+  unlockThenPlay();
+
   const overlay = document.getElementById('curtain-overlay');
-  const lc  = document.getElementById('curtain-left');
-  const rc  = document.getElementById('curtain-right');
-  const flL = document.getElementById('fabric-left');
-  const flR = document.getElementById('fabric-right');
-  const seal    = document.getElementById('seal');
-  const prompt  = document.getElementById('tap-prompt');
-  const seam    = document.getElementById('curtain-seam');
-  const rod     = document.getElementById('curtain-rod');
-  const dua     = document.getElementById('dua-overlay');
-  const content = document.getElementById('hero-content');
+  const lc   = document.getElementById('curtain-left');
+  const rc   = document.getElementById('curtain-right');
+  const flL  = document.getElementById('fabric-left');
+  const flR  = document.getElementById('fabric-right');
+  const seal   = document.getElementById('seal');
+  const prompt = document.getElementById('tap-prompt');
+  const seam   = document.getElementById('curtain-seam');
+  const rod    = document.getElementById('curtain-rod');
+  const dua    = document.getElementById('dua-overlay');
+  const content= document.getElementById('hero-content');
 
   prompt.classList.add('gone');
   setTimeout(() => seal.classList.add('lifted'), 100);
@@ -894,26 +830,21 @@ function openCurtains() {
 
   const tl = gsap.timeline({ delay:.38 });
 
-  // Curtains sweep apart
   tl.to(lc, { x:'-100%', scaleX:.78, duration:2.0, ease:'power2.inOut' }, 0)
     .to(rc, { x:'100%',  scaleX:.78, duration:2.0, ease:'power2.inOut' }, 0);
 
-  // Fabric bottom-lag
   tl.to(flL, { skewY:-6, y:22, duration:.75, ease:'power1.in' }, 0)
     .to(flL, { skewY:0,  y:0,  duration:.55, ease:'elastic.out(1,0.5)' }, .8)
     .to(flR, { skewY:6,  y:22, duration:.75, ease:'power1.in' }, 0)
     .to(flR, { skewY:0,  y:0,  duration:.55, ease:'elastic.out(1,0.5)' }, .8);
 
-  // Overshoot bounce
   tl.to(lc, { x:'-91%', duration:.2, ease:'power1.out' })
     .to(lc, { x:'-100%', duration:.38, ease:'power2.out' });
   tl.to(rc, { x:'91%',  duration:.2, ease:'power1.out' }, '<')
     .to(rc, { x:'100%', duration:.38, ease:'power2.out' }, '<');
 
-  // Confetti burst (FIX 7: once)
   tl.call(fireCannon, [], .95);
 
-  // Dua overlay
   tl.call(() => {
     gsap.fromTo(dua, { opacity:0, y:28 },
       { opacity:1, y:0, duration:1.2, ease:'power2.out',
@@ -922,22 +853,18 @@ function openCurtains() {
       onComplete: () => { dua.style.display = 'none'; } });
   }, [], .45);
 
-  // Hero content
   tl.call(() => {
     setTimeout(() => { content.classList.add('show'); document.body.classList.add('unlocked'); }, 7400);
     setTimeout(() => overlay.classList.add('opened'), 8000);
   }, [], .45);
-
-  // Music already started on curtain tap above
 }
 
-/* ══════════════════════════════════════════════════
-   FIX 3: HEART SCRATCH — proper path, larger
-══════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+   SCRATCH CARDS
+══════════════════════════════════════════════ */
 const THRESHOLD = 0.52, done = [false, false, false];
 
 function heartPath2D(sz) {
-  // Scaled for sz×sz canvas — matches CSS clip-path exactly
   const s = sz / 100;
   const p = new Path2D();
   p.moveTo(50*s, 24*s);
@@ -962,7 +889,6 @@ function initScratch(idx) {
   function attachListeners() {
     ctx.globalCompositeOperation = 'destination-out';
     let drawing = false; const r = sz * .15;
-
     function pos(e) {
       const rect = canvas.getBoundingClientRect();
       const sx = canvas.width/rect.width, sy = canvas.height/rect.height;
@@ -975,7 +901,6 @@ function initScratch(idx) {
       ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
       checkThreshold(idx, ctx, canvas, sz, hp);
     }
-
     canvas.addEventListener('mousedown', e => { drawing=true; draw(e); });
     canvas.addEventListener('mousemove', draw);
     canvas.addEventListener('mouseup', () => drawing=false);
@@ -1003,7 +928,6 @@ function initScratch(idx) {
     attachListeners();
   }
 
-  // Draw heart.png as scratch overlay; fallback to gradient if missing
   const img = new Image();
   img.onload = () => {
     ctx.save();
@@ -1077,9 +1001,9 @@ function spawnParticles(src) {
   }
 }
 
-/* ══════════════════════════════════════════════════
-   FIX 4: VENUE CARDS — 360° spin on flip
-══════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+   VENUE FLIP CARD
+══════════════════════════════════════════════ */
 (function() {
   const card  = document.getElementById('flip-card');
   const scene = document.getElementById('flip-scene');
@@ -1097,11 +1021,8 @@ function spawnParticles(src) {
 
   function flipCard() {
     isFlipped = !isFlipped;
-    // FIX 4: 360° spin — add 360 to current rotation, land on correct face
-    totalRotation += 180; // 180° to reveal the other face (was 360 = same face)
+    totalRotation += 180;
     card.style.transform = `rotateY(${totalRotation}deg)`;
-    // Faces are at 0° and 180° — the flip-back has rotateY(180deg) baked in
-    // After each 360 spin the front/back logic alternates
     setDots(isFlipped); progress = 0; lastTime = null; bar.style.width = '0%';
   }
 
@@ -1116,7 +1037,6 @@ function spawnParticles(src) {
     rafId = requestAnimationFrame(tick);
   }
 
-  /* Swipe detection */
   let tStartX=0, tStartY=0, isSwiping=false, holdTmt=null;
 
   scene.addEventListener('touchstart', e => {
@@ -1138,11 +1058,10 @@ function spawnParticles(src) {
     if (isSwiping && Math.abs(dx) > SWIPE_THRESHOLD) {
       flipCard(); paused = false;
     } else {
-      paused = false; // was held or small movement — just unpause
+      paused = false;
     }
     isSwiping = false;
   }, {passive:true});
-  // Tap-to-flip and mouse listeners intentionally removed — swipe only
 
   window._flipCard = { get paused(){return paused;}, set paused(v){paused=v;} };
 
@@ -1160,9 +1079,9 @@ function toggleFlipPause() {
   document.getElementById('ctrl-label').textContent   = fc.paused ? 'Auto-flip off' : 'Auto-flip on';
 }
 
-/* ══════════════════════════════════════════════════
+/* ══════════════════════════════════════════════
    COUNTDOWN
-══════════════════════════════════════════════════ */
+══════════════════════════════════════════════ */
 function tick2() {
   const diff = new Date('2026-08-19T00:00:00') - new Date();
   if (diff<=0) { ['cdays','chours','cmins','csecs'].forEach(id=>document.getElementById(id).textContent='00'); return; }
@@ -1173,16 +1092,15 @@ function tick2() {
 }
 tick2(); setInterval(tick2, 1000);
 
-/* ══════════════════════════════════════════════════
-   FIX 2: SMOOTH SCROLL FADE-IN
-══════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+   SCROLL FADE-IN
+══════════════════════════════════════════════ */
 const io = new IntersectionObserver(entries =>
   entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('vis'); }),
   { threshold:.12, rootMargin:'0px 0px -40px 0px' }
 );
 document.querySelectorAll('.fi').forEach(el => io.observe(el));
 
-/* Scratch init */
 let scratchInited = false;
 const scratchIO = new IntersectionObserver(entries => {
   if (entries[0].isIntersecting && !scratchInited) {
@@ -1191,10 +1109,9 @@ const scratchIO = new IntersectionObserver(entries => {
 }, {threshold:.25});
 scratchIO.observe(document.getElementById('scratch'));
 
-/* ══════════════════════════════════════════════════
-   FIX 1: SCROLL HEARTS — active in ALL sections
-   FIX 2: Heart colours for premium feel
-══════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+   SCROLL HEARTS
+══════════════════════════════════════════════ */
 const HEART_PALETTE = [
   {fill:'#5D6D50',glow:'rgba(93,109,80,0.5)'},
   {fill:'#D4AF37',glow:'rgba(212,175,55,0.55)'},
@@ -1214,7 +1131,6 @@ function heartSVG(fill, size) {
 
 let lastScrollY = window.scrollY, heartThrottle = 0;
 
-// FIX 1: NO hero guard — hearts everywhere during scroll
 window.addEventListener('scroll', () => {
   const now = Date.now();
   if (now - heartThrottle < 55) return; heartThrottle = now;
@@ -1224,7 +1140,6 @@ window.addEventListener('scroll', () => {
   for (let i = 0; i < count; i++) spawnHeart(null);
 }, {passive:true});
 
-/* Touch drag burst — everywhere */
 let touchTimer = 0;
 document.addEventListener('touchmove', e => {
   const now = Date.now(); if (now - touchTimer < 80) return; touchTimer = now;
@@ -1239,7 +1154,6 @@ function spawnHeart(pos) {
   el.className = 'heart-particle';
   el.innerHTML = heartSVG(pal.fill, size);
   el.style.filter = `drop-shadow(0 0 3px ${pal.glow})`;
-
   const x = pos ? pos.x : 15 + Math.random()*(window.innerWidth-30);
   const y = pos ? pos.y : window.scrollY + window.innerHeight*(0.2+Math.random()*0.6);
   const riseY  = -(60+Math.random()*110);
@@ -1247,11 +1161,10 @@ function spawnHeart(pos) {
   const rot2   = rot1 + (Math.random()-.5)*55;
   const dur    = 1.1 + Math.random()*1.1;
   const startS = 0.5 + Math.random()*0.65;
-
   el.style.cssText += `left:${x}px;top:${y}px;--hy:${riseY}px;--hr:${rot1}deg;--hr2:${rot2}deg;--hs:${startS};animation-duration:${dur}s;`;
   document.body.appendChild(el);
   setTimeout(() => el.remove(), dur*1000+120);
 }
 </script>
 </body>
-</html>
+  </html>
