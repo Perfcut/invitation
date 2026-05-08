@@ -136,9 +136,6 @@
   }
   .dua-inner { position:relative; z-index:1; display:flex; flex-direction:column; align-items:center; width:100%; max-width:360px; }
   .dua-star-top { width:50%; height:1px; margin:0 auto 22px; background:linear-gradient(90deg, transparent 0%, var(--gold-lt) 30%, var(--gold) 50%, var(--gold-lt) 70%, transparent 100%); opacity:0.7; }
-  .dua-star-line { flex:1; height:1px; background:linear-gradient(to right, transparent 0%, var(--gold) 100%); opacity:0.75; }
-  .dua-star-line.r { background:linear-gradient(to left, transparent 0%, var(--gold) 100%); opacity:0.75; }
-  .dua-star-gem { width:7px; height:7px; background:var(--gold); transform:rotate(45deg); flex-shrink:0; opacity:0.75; box-shadow:0 0 8px rgba(212,175,55,0.6); }
   .dua-arabic { font-family:'Amiri',serif; font-size:clamp(18px,5.5vw,24px); color:var(--gold-lt); direction:rtl; text-align:center; line-height:2.1; letter-spacing:1px; margin-bottom:26px; text-shadow:0 0 30px rgba(212,175,55,0.25); width:100%; }
   .dua-rule { width:60%; height:1px; margin:0 auto 22px; background:linear-gradient(90deg, transparent 0%, var(--gold-lt) 30%, var(--gold) 50%, var(--gold-lt) 70%, transparent 100%); opacity:0.7; }
   .dua-transliteration { font-family:'Cormorant Garamond','Georgia',serif; font-size:clamp(12px,3.2vw,14px); font-style:italic; color:var(--sage-lt); text-align:center; line-height:2.1; max-width:300px; margin-bottom:28px; }
@@ -402,8 +399,15 @@
 </head>
 <body>
 
-<!-- ✅ iOS FIX: playsinline + webkit-playsinline, no loop, no autoplay -->
-<audio id="bgm" preload="none" playsinline webkit-playsinline>
+<!--
+  ╔══════════════════════════════════════════════╗
+  ║  iOS AUDIO — THE ONLY CORRECT APPROACH       ║
+  ║  • playsinline + webkit-playsinline on tag   ║
+  ║  • NO autoplay, NO loop (optional for UX)    ║
+  ║  • preload="none" saves mobile data          ║
+  ╚══════════════════════════════════════════════╝
+-->
+<audio id="bgm" preload="none" playsinline webkit-playsinline loop>
   <source src="music.mp3" type="audio/mpeg">
 </audio>
 
@@ -420,7 +424,7 @@
     <line x1="3" y1="3" x2="21" y2="21" stroke-width="1.8"/>
   </svg>
 </button>
-<div id="music-toast">&#x2669; Tap the music button to play</div>
+<div id="music-toast">&#x2669; Tap the curtain to open &amp; play music</div>
 
 <div id="dua-overlay">
   <div class="dua-inner">
@@ -689,33 +693,102 @@
 <footer><a href="https://instagram.com/perf.cut" target="_blank" rel="noopener noreferrer">Made by &#64;perf.cut</a></footer>
 
 <script>
-/* ══════════════════════════════════════════════
-   iOS AUDIO — CLEAN, CORRECT IMPLEMENTATION
-   Rules applied:
-   1. playsinline + webkit-playsinline on <audio>
-   2. AudioContext created + resumed SYNCHRONOUSLY
-      inside the tap/click handler (the gesture)
-   3. bgm.play() chained inside ctx.resume().then()
-      so it inherits gesture trust
-   4. setIcons() helper used everywhere — no manual
-      display toggling that can be inverted
-   5. No autoplay, no setTimeout delays on play
-   6. toggleMusic() button also uses unlockThenPlay()
-══════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════
+   iOS AUDIO — DEFINITIVE FIX
+   ─────────────────────────────────────────────────────────────
+   THE RULE: bgm.play() MUST be called SYNCHRONOUSLY inside the
+   user-gesture handler. Any .then(), await, or setTimeout AFTER
+   it breaks iOS's gesture trust chain.
 
-let musicOn = false;
+   WHAT WAS WRONG BEFORE:
+   • AudioContext was created, then ctx.resume().then(() => {
+       bgm.play()  ← this is ASYNC, trust chain broken on iOS
+     })
+
+   THE FIX (3 steps):
+   1. bgm.volume = 0      — silent start (sync)
+   2. bgm.play()          — called SYNC inside the tap handler
+   3. fadeInVolume()      — async volume ramp, runs after play()
+      is already started; safe because play() was already called
+══════════════════════════════════════════════════════════════ */
+
 const bgm = document.getElementById('bgm');
-
-/* When track ends naturally, reset icon to muted */
-bgm.addEventListener('ended', () => {
-  musicOn = false;
-  setIcons(false);
-});
+let musicOn = false;
+let fadeTimer = null;
 
 /* Single source of truth for icon state */
 function setIcons(playing) {
   document.getElementById('ic-on').style.display  = playing ? 'block' : 'none';
   document.getElementById('ic-off').style.display = playing ? 'none'  : 'block';
+}
+
+/* Smooth fade-in over ~2 seconds */
+function fadeInVolume(targetVol) {
+  targetVol = targetVol || 1;
+  bgm.volume = 0;
+  if (fadeTimer) clearInterval(fadeTimer);
+  fadeTimer = setInterval(() => {
+    if (bgm.volume < targetVol - 0.04) {
+      bgm.volume = Math.min(targetVol, +(bgm.volume + 0.04).toFixed(2));
+    } else {
+      bgm.volume = targetVol;
+      clearInterval(fadeTimer);
+      fadeTimer = null;
+    }
+  }, 80); /* 80ms × 25 steps ≈ 2s fade */
+}
+
+/*
+  ╔════════════════════════════════════════════╗
+  ║  startMusicOnGesture()                     ║
+  ║  Call this SYNCHRONOUSLY inside ANY click/ ║
+  ║  touchend handler. Do NOT await anything   ║
+  ║  before calling it.                        ║
+  ╚════════════════════════════════════════════╝
+*/
+function startMusicOnGesture() {
+  if (musicOn) return;
+
+  /* Step 1 — set volume to 0 before play (SYNC) */
+  bgm.volume = 0;
+
+  /* Step 2 — call play() SYNCHRONOUSLY (the key iOS fix) */
+  const playPromise = bgm.play();
+
+  /* Step 3 — handle the promise result, then fade in */
+  if (playPromise !== undefined) {
+    playPromise
+      .then(() => {
+        musicOn = true;
+        setIcons(true);
+        fadeInVolume(1); /* ramp up volume smoothly */
+      })
+      .catch(() => {
+        /* Autoplay still blocked (very rare with gesture) */
+        setIcons(false);
+        showToast();
+      });
+  } else {
+    /* Older browser — assume play() succeeded */
+    musicOn = true;
+    setIcons(true);
+    fadeInVolume(1);
+  }
+}
+
+/* Music button toggle — also a direct user gesture */
+function toggleMusic() {
+  if (musicOn) {
+    /* Pause & reset */
+    if (fadeTimer) { clearInterval(fadeTimer); fadeTimer = null; }
+    bgm.pause();
+    bgm.currentTime = 0;
+    musicOn = false;
+    setIcons(false);
+  } else {
+    /* Re-play — this click IS the user gesture, so it's safe */
+    startMusicOnGesture();
+  }
 }
 
 function showToast() {
@@ -724,54 +797,8 @@ function showToast() {
   setTimeout(() => t.classList.remove('show'), 3800);
 }
 
-/*
-  iOS CRITICAL RULE:
-  AudioContext.resume() MUST be called synchronously
-  inside the user-gesture handler. bgm.play() MUST be
-  called inside the .then() of that same resume() —
-  NOT in a setTimeout, NOT after an await gap.
-  This keeps the gesture trust chain unbroken.
-*/
-function unlockThenPlay() {
-  const AC = window.AudioContext || window.webkitAudioContext;
-  if (AC) {
-    try {
-      const ctx = new AC();
-      /* resume() called sync inside gesture → play chained inside .then() */
-      ctx.resume().then(() => {
-        bgm.play()
-          .then(() => { musicOn = true; setIcons(true); })
-          .catch(() => { setIcons(false); showToast(); });
-      }).catch(() => {
-        /* resume() rejected — try play directly as last resort */
-        bgm.play()
-          .then(() => { musicOn = true; setIcons(true); })
-          .catch(() => { setIcons(false); showToast(); });
-      });
-    } catch (e) {
-      bgm.play()
-        .then(() => { musicOn = true; setIcons(true); })
-        .catch(() => { setIcons(false); showToast(); });
-    }
-  } else {
-    /* No Web Audio API (very old browser) — try direct play */
-    bgm.play()
-      .then(() => { musicOn = true; setIcons(true); })
-      .catch(() => { setIcons(false); showToast(); });
-  }
-}
-
-/* Music button handler */
-function toggleMusic() {
-  if (musicOn) {
-    bgm.pause();
-    bgm.currentTime = 0;
-    musicOn = false;
-    setIcons(false);
-  } else {
-    unlockThenPlay();
-  }
-}
+/* Show toast hint on page load */
+setTimeout(showToast, 1800);
 
 /* ══════════════════════════════════════════════
    CONFETTI
@@ -799,9 +826,11 @@ function fireCannon() {
 }
 
 /* ══════════════════════════════════════════════
-   CURTAIN — openCurtains() is the FIRST user tap.
-   iOS trusts this gesture, so unlockThenPlay()
-   called here will succeed on iOS Safari.
+   CURTAIN — openCurtains() IS the first user tap.
+
+   CRITICAL: startMusicOnGesture() is called at the
+   very TOP of this function, synchronously, before
+   any animation code. This preserves iOS gesture trust.
 ══════════════════════════════════════════════ */
 let curtainOpened = false;
 
@@ -809,20 +838,20 @@ function openCurtains() {
   if (curtainOpened) return;
   curtainOpened = true;
 
-  /* ✅ Start music here — this IS the user gesture, iOS allows it */
-  unlockThenPlay();
+  /* ✅ iOS SAFE: called synchronously as first thing in tap handler */
+  startMusicOnGesture();
 
   const overlay = document.getElementById('curtain-overlay');
-  const lc   = document.getElementById('curtain-left');
-  const rc   = document.getElementById('curtain-right');
-  const flL  = document.getElementById('fabric-left');
-  const flR  = document.getElementById('fabric-right');
-  const seal   = document.getElementById('seal');
-  const prompt = document.getElementById('tap-prompt');
-  const seam   = document.getElementById('curtain-seam');
-  const rod    = document.getElementById('curtain-rod');
-  const dua    = document.getElementById('dua-overlay');
-  const content= document.getElementById('hero-content');
+  const lc      = document.getElementById('curtain-left');
+  const rc      = document.getElementById('curtain-right');
+  const flL     = document.getElementById('fabric-left');
+  const flR     = document.getElementById('fabric-right');
+  const seal    = document.getElementById('seal');
+  const prompt  = document.getElementById('tap-prompt');
+  const seam    = document.getElementById('curtain-seam');
+  const rod     = document.getElementById('curtain-rod');
+  const dua     = document.getElementById('dua-overlay');
+  const content = document.getElementById('hero-content');
 
   prompt.classList.add('gone');
   setTimeout(() => seal.classList.add('lifted'), 100);
