@@ -91,7 +91,7 @@
     animation:hintPulse 2.5s ease-in-out infinite
   }
   @keyframes hintPulse{0%,100%{opacity:.65}50%{opacity:1}}
-  .unmute-dot{width:7px;height:7px;border-radius:50%;background:var(--gold);box-shadow:0 0 8px rgba(212,175,55,.8);animation:dotBlink 1.2s ease-in-out infinite}
+ /* .unmute-dot*/{width:7px;height:7px;border-radius:50%;background:var(--gold);box-shadow:0 0 8px rgba(212,175,55,.8);animation:dotBlink 1.2s ease-in-out infinite}
   @keyframes dotBlink{0%,100%{opacity:1}50%{opacity:.3}}
 
   /* ── Dua overlay ── */
@@ -115,9 +115,11 @@
   .hero-content{width:100%;max-width:400px;text-align:center;position:relative;opacity:0;transition:opacity 1.2s var(--ease-out-expo);background:var(--ivory);border-radius:var(--radius-xl) var(--radius-xl) var(--radius-lg) var(--radius-lg);box-shadow:0 40px 100px rgba(0,0,0,.55),0 0 0 1px rgba(212,175,55,.2),0 0 0 5px rgba(212,175,55,.04),inset 0 1px 0 rgba(255,255,255,.6);padding:48px 22px 48px;overflow:hidden}
   .hero-content.show{opacity:1}
   .decor-lamp{position:absolute;width:54px;top:128px}
-  .decor-lamp.l{left:3px;opacity:.13;transform:scaleX(-1)}.decor-lamp.r{right:3px;opacity:.13}
+  .decor-lamp.l{left:3px;opacity:100%;transform:scaleX(-1)}
+  .decor-lamp.r{right:3px;opacity:.13}
   .decor-flower{position:absolute;width:66px;bottom:10px}
-  .decor-flower.l{left:0;opacity:.13;transform:scaleX(-1)}.decor-flower.r{right:0;opacity:.13}
+  .decor-flower.l{left:0;opacity:100%;transform:scaleX(-1)}
+  .decor-flower.r{right:0;opacity:.13}
   .c-frame{border:1px solid rgba(212,175,55,.28);border-radius:60px 60px 44px 44px;padding:28px 20px 24px;position:relative;background:rgba(255,255,255,.35);overflow:hidden}
   .c-frame::before,.c-frame::after{content:'';position:absolute;left:50%;transform:translateX(-50%);width:55%;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:.55}
   .c-frame::before{top:18px}.c-frame::after{bottom:18px}
@@ -370,10 +372,11 @@
   <div class="curtain right" id="curtain-right"><div class="fabric" id="fabric-right"></div></div>
   <div class="curtain-seam" id="curtain-seam"></div>
   <!-- UNMUTE HINT — Critical UX fix for iPhone ringer switch -->
-  <div class="unmute-hint">
+  <!--
+<div class="unmute-hint">
     <span class="unmute-dot"></span>
     Unmute your phone for music
-  </div>
+  </div> -->
   <div class="seal-wrap" id="seal">
     <img src="custom-seal.png" class="seal-img" alt="Seal"
       onerror="this.style.display='none';document.getElementById('seal-fb').style.display='flex'">
